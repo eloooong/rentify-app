@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "status": "DRAFT - approximate, not exported from Figma",
+    "source": "Pixel colors sampled from PNG screenshots of the 2023 desktop designs (home, All Items, listing detail, header states, two modals). Screenshots are compressed, so hex values can be off by a few units.",
+    "verified": false,
+    "notToTrust": [
+      "Font family is a visual guess (looks like Poppins).",
+      "No spacing, radius, type scale, shadow, or breakpoint values were measured.",
+      "No mobile frames were seen, so mobile values are unknown."
+    ],
+    "nextStep": "Replace with values from Figma variables or styles once access is available, then map into app/globals.css under @theme.",
+    "notes": [
+      "A second, brighter orange (#FB7800) appears on the Confirm buttons in both modals. It is not a token for now. Revisit when the Figma values are available."
+    ]
+  },
+  "color": {
+    "brand": {
+      "primary": {
+        "value": "#E55910",
+        "source": "Nav links, Lend button, section accents",
+        "decision": "Chosen as the brand primary by Person A.",
+        "note": "Hero uses a semi-transparent orange overlay over a photo (about #DE6934 on screen); treat that as an overlay, not a token."
+      }
+    },
+    "surface": {
+      "page": { "value": "#FFFFFF", "source": "Page and modal background" },
+      "muted": { "value": "#EFEFEF", "source": "Footer background" },
+      "tint": {
+        "value": "#EFEFFD",
+        "source": "Cancel button background (lavender)"
+      }
+    },
+    "text": {
+      "default": { "value": "#000000", "source": "Headings and prices" },
+      "body": { "value": "#484866", "source": "Modal body text" },
+      "muted": { "value": "#787890", "source": "Secondary text, approximate" }
+    },
+    "border": {
+      "divider": { "value": "#EAEAEA", "source": "Modal dividers" }
+    }
+  },
+  "font": {
+    "family": {
+      "sans": { "value": "Poppins", "verified": false }
+    }
+  },
+  "radius": {},
+  "spacing": {},
+  "breakpoints": {},
+  "contrastChecks": {
+    "note": "WCAG 2.1 AA needs 4.5:1 for normal text and 3:1 for large text or UI components.",
+    "results": [
+      {
+        "pair": "#E55910 text on white",
+        "ratio": 3.64,
+        "aa": "fails for normal text, passes for large text"
+      },
+      {
+        "pair": "white text on #FB7800 button",
+        "ratio": 2.7,
+        "aa": "fails"
+      },
+      {
+        "pair": "#FB7800 text on #EFEFFD (Cancel button)",
+        "ratio": 2.37,
+        "aa": "fails"
+      },
+      {
+        "pair": "#E55910 text on #EFEFEF",
+        "ratio": 3.17,
+        "aa": "fails for normal text"
+      },
+      { "pair": "#484866 text on white", "ratio": 8.77, "aa": "passes" },
+      {
+        "pair": "#787890 text on white",
+        "ratio": 4.3,
+        "aa": "fails by a small margin"
+      }
+    ],
+    "suggestion": "A darker orange such as #C2410C (5.18:1 with white, both directions) would pass AA. This is a proposal that needs the designer's approval, not an extracted value."
+  }
+}
