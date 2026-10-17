@@ -1,47 +1,143 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 /*
- * Rentify design tokens (DRAFT).
+ * `dark:` variants apply only under a `.dark` ancestor. Rentify never sets it
+ * (light-only for now), so shadcn components stay light even on a dark OS.
+ */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Rentify design tokens (DRAFT). Single source of truth for colors.
  * Source: docs/design-tokens.json. The colors are approximate, sampled from
  * screenshots of the 2023 desktop designs, not exported from Figma.
  * Replace with the real values once available. Components must use these
  * tokens only (no hard-coded hex values).
  */
-@theme {
+:root {
   /* Brand primary, chosen by Person A. Use for backgrounds, borders and large elements. */
-  --color-brand: #e55910;
-  --color-brand-foreground: #ffffff;
+  --rentify-brand: #e55910;
+  --rentify-brand-foreground: #ffffff;
   /*
    * PROPOSAL, not from Figma. #e55910 on white is 3.64:1, which fails WCAG 2.1 AA
-   * for normal-size text. Use this darker orange (5.18:1 with white, both ways)
-   * for small orange text, links, and buttons with small white text.
-   * Needs the designer's approval; changing this one value updates every use.
+   * for normal-size text. This darker orange is 5.18:1 with white (both ways)
+   * and is used for small orange text, links, focus, and buttons with small
+   * white text. Needs the designer's approval; change it here to update every use.
    */
-  --color-brand-strong: #c2410c;
+  --rentify-brand-strong: #c2410c;
 
-  --color-surface: #ffffff;
-  --color-surface-muted: #efefef;
-  --color-surface-tint: #efeffd;
+  --rentify-surface: #ffffff;
+  --rentify-surface-muted: #efefef;
+  --rentify-surface-tint: #efeffd;
 
-  --color-fg: #000000;
-  --color-fg-body: #484866;
-  /* 4.3:1 on white: below AA for normal text. Use only for large or decorative text. */
-  --color-fg-muted: #787890;
-  --color-border: #eaeaea;
+  --rentify-fg: #000000;
+  --rentify-fg-body: #484866;
+  /* Sampled secondary text. 6.10:1 on white, 5.31:1 on surface-muted. */
+  --rentify-fg-secondary: #606078;
+  /* 4.3:1 on white: below AA for normal text. Large or decorative text only. */
+  --rentify-fg-muted: #787890;
+  --rentify-border: #eaeaea;
+
+  /*
+   * Not in the design yet. Tailwind red-700: 6.47:1 on white, 5.45:1 on the
+   * 10% tint shadcn uses for destructive buttons and badges (red-600 failed there).
+   */
+  --rentify-danger: #b91c1c;
+
+  /*
+   * shadcn/ui semantic slots, mapped onto the Rentify palette above.
+   * Contrast (AA): primary text 5.18, secondary 4.55, muted text 6.10,
+   * input border 3.64 (UI components need 3:1).
+   */
+  --background: var(--rentify-surface);
+  --foreground: var(--rentify-fg-body);
+  --card: var(--rentify-surface);
+  --card-foreground: var(--rentify-fg-body);
+  --popover: var(--rentify-surface);
+  --popover-foreground: var(--rentify-fg-body);
+  --primary: var(--rentify-brand-strong);
+  --primary-foreground: var(--rentify-brand-foreground);
+  --secondary: var(--rentify-surface-tint);
+  --secondary-foreground: var(--rentify-brand-strong);
+  --muted: var(--rentify-surface-muted);
+  --muted-foreground: var(--rentify-fg-secondary);
+  --accent: var(--rentify-surface-muted);
+  --accent-foreground: var(--rentify-fg);
+  --destructive: var(--rentify-danger);
+  --border: var(--rentify-border);
+  /* The design gives inputs an orange border. */
+  --input: var(--rentify-brand);
+  --ring: var(--rentify-brand-strong);
+  /* shadcn default; corner radius was not measured from the design. */
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  /* Rentify utilities: bg-brand, text-fg-body, bg-surface-muted, and so on. */
+  --color-brand: var(--rentify-brand);
+  --color-brand-foreground: var(--rentify-brand-foreground);
+  --color-brand-strong: var(--rentify-brand-strong);
+  --color-surface: var(--rentify-surface);
+  --color-surface-muted: var(--rentify-surface-muted);
+  --color-surface-tint: var(--rentify-surface-tint);
+  --color-fg: var(--rentify-fg);
+  --color-fg-body: var(--rentify-fg-body);
+  --color-fg-secondary: var(--rentify-fg-secondary);
+  --color-fg-muted: var(--rentify-fg-muted);
+
+  /* shadcn utilities: bg-primary, text-muted-foreground, border-border, and so on. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 
   /* The design looks like Poppins, but that is unverified. System fonts until confirmed. */
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
+  --font-heading:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 @layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
   html {
     color-scheme: light;
   }
 
+  body {
+    @apply bg-background font-sans text-foreground;
+  }
+
   :focus-visible {
-    outline: 2px solid var(--color-brand-strong);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }
