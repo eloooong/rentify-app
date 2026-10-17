@@ -12,15 +12,26 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset --local --no-seed",
+    "db:lint": "supabase db lint --local --schema public --fail-on warning",
+    "db:test": "supabase test db --local",
+    "db:env": "node supabase/scripts/env.mjs",
+    "db:types": "node supabase/scripts/types.mjs",
+    "db:smoke": "node supabase/scripts/smoke.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.118.0",
     "next": "16.4.2",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "server-only": "0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",
@@ -32,6 +43,7 @@
     "eslint-config-prettier": "10.1.8",
     "postcss": "8.5.30",
     "prettier": "3.9.10",
+    "supabase": "2.121.0",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vitest": "5.0.5"

@@ -1,37 +1,71 @@
-# Rentify database foundation
+# Rentify Supabase setup and contract
 
-## Current scope: B0.3
+## Current scope: B0.3 and B0.4
 
 The initial migration creates 14 application tables, the `booking_status` enum, UUID keys, timestamps/update triggers, foreign keys, indexes, and basic integrity constraints. `profile_private` keeps phone/verification information separate from the future public profile surface.
 
-This is a schema foundation, not a working rental backend. There are **no application access policies**. Every table has RLS enabled, and all table privileges are explicitly revoked from `PUBLIC`, `anon`, and `authenticated`. Trusted server-side `service_role` access is granted explicitly; audit events permit only select/insert for that role. No browser client, including a listing owner, should access these tables yet.
+Every table has RLS enabled. The B0.4 migration allows `anon` and `authenticated` to **select categories only**; neither role can insert, update, or delete categories. All other application tables still deny client access. Trusted server-side `service_role` access is granted explicitly; audit events permit only select/insert for that role. This is a foundation, not a working rental backend.
 
 ## Local verification
 
-Use **Supabase CLI 2.121.0** and a running Docker-compatible engine. See the official [CLI setup guide](https://supabase.com/docs/guides/local-development/cli/getting-started). The CLI configuration targets PostgreSQL 17. No Supabase login, hosted project, or cloud credentials are required for these disposable local checks.
+Install Node.js 24, then run `npm ci`. This installs **Supabase CLI 2.121.0** from the lockfile, including its platform binary; a global CLI install is unnecessary. Use a running Docker-compatible engine. See the official [CLI setup guide](https://supabase.com/docs/guides/local-development/cli/getting-started). The CLI configuration targets PostgreSQL 17. No Supabase login, hosted project, or cloud credentials are required.
+
+On Windows, enable WSL 2 first: open PowerShell **as Administrator**, run `wsl --install --no-distribution`, and restart if requested. Then install/start [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with the WSL 2 backend. Verify `docker info` succeeds before starting Supabase. A per-user Docker install cannot enable the Virtual Machine Platform Windows feature itself.
 
 ```sh
-supabase --version
-supabase db start
-supabase db reset --local --no-seed
-supabase db lint --local --schema public --fail-on warning
-supabase test db --local
+npm exec -- supabase --version
+npm run db:start
+npm run db:env
+npm run db:lint
+npm run db:test
+npm run db:smoke
+npm run dev
 ```
 
-`db reset --local` discards the local test database's contents and reapplies migrations. Run it only against this project's disposable development database. The workflow never uses `--linked`, a remote database URL, or production credentials. Stop your local stack with `supabase stop` when finished.
+`db:start` starts the local stack and applies migrations on the first run. Studio is at <http://127.0.0.1:54323> and the test email inbox at <http://127.0.0.1:54324>. `db:env` writes only the local public URL/key and app URL to ignored `.env.local`; it refuses to overwrite an existing file and never prints credentials. It supports the CLI's public publishable key or legacy local anonymous key. Never put a service/secret key in either public variable. Restart the Next.js dev server after changing environment values.
 
-On Person B's Windows machine, the pinned CLI was downloaded to a temporary tools directory and its release checksum verified. Docker is not installed, so local reset/tests could not run there. `.github/workflows/database.yml` performs the actual reset, lint, pgTAP tests, and type generation using a disposable Linux database. B0.4 still needs the persistent local setup and typed application clients.
+Use `npm run db:reset` only when you intend to **discard this project's local database contents** and reapply every migration. It is explicitly local and does not use `--linked` or production credentials. `npm run db:stop` stops the stack while retaining development data. CI alone uses `--no-backup` for disposable teardown.
+
+On Person B's Windows machine, WSL's Virtual Machine Platform feature was enabled successfully on 18 October 2026, but a restart is required before Docker can install. Docker's signed, checksum-verified installer stopped at that prerequisite. Local database startup, environment generation, and smoke checks remain pending that restart/install. `.github/workflows/database.yml` independently runs disposable Linux database/API verification; check the PR result before relying on it.
+
+## Typed clients
+
+Client Components import `createClient` from `@/lib/supabase/browser`. Server Components import the async `createClient` from `@/lib/supabase/server` and create it inside the request, never at module scope. Both use the generated `Database` type and only the public environment variables. Missing configuration fails when the client is used, so the existing placeholder app can still build without Supabase credentials.
+
+```tsx
+import { createClient } from "@/lib/supabase/server";
+
+// Example for Person A's future component; not a shipped product route.
+export default async function CategoryList() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id,name,slug")
+    .order("name");
+  if (error) throw new Error("Unable to load categories.");
+  return (
+    <ul>
+      {data.map((category) => (
+        <li key={category.id}>{category.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+**The server helper is read-only:** Server Components cannot persist cookies. B1.1 must add a refresh proxy and writable clients for auth actions/callbacks, forward refresh cookies/cache headers, and verify identities with `getClaims()`/`getUser()`. Do not use this helper for login/logout or trust `getSession()` as authorization. Protected routes and auth flows are not implemented in B0.4.
+
+`db:smoke` makes real HTTP category reads, asserts category writes/private profile reads are denied, and renders a temporary Next.js Server Component using the actual server helper. Its fixture stays in ignored `tmp/`; no diagnostic route is added to the app. An empty category array is expected until B1.3/B1.4 add agreed templates/seeds. SQL tests separately exercise populated reference data for both anonymous and authenticated roles.
 
 ## Types and migration workflow
 
 Generated types belong in `lib/supabase/database.types.ts`. They must come from the migrated database, not a handwritten approximation. Regenerate using the pinned CLI, then format with the repository's existing Prettier configuration:
 
 ```sh
-supabase gen types typescript --local --schema public > lib/supabase/database.types.ts
-npm exec -- prettier --write lib/supabase/database.types.ts
+npm run db:types
 ```
 
-Use a UTF-8 output redirect (for example PowerShell 7 or Bash). Create the parent directory first if it does not exist. CI generates and formats the same output, requires an exact match with the committed file, and uploads a `database-types` artifact. A missing or outdated types file fails the check. Later schema changes require a new migration and regenerated types in the same PR. Never edit an applied migration.
+The script captures CLI output, applies the repository's Prettier settings, and writes UTF-8 only after generation/formatting succeed; a failure does not truncate the existing contract. CI uses the same script, requires an exact match with the committed file, and uploads a `database-types` artifact. A missing or outdated types file fails the check. Later schema changes require a new migration and regenerated types in the same PR. Never edit an applied migration.
 
 The pgTAP fixtures/grants are enclosed in a rolled-back transaction. The tests exercise grant denial, RLS denial even when temporary table grants exist, trusted backend reads, audit immutability for that role, ownership consistency, and invalid values. They do not establish booking or review eligibility rules that have not been implemented. Replace foundation deny-all expectations with the intended allow/deny cases as feature-specific policies are added.
 
@@ -59,7 +93,7 @@ Booking states: `requested`, `accepted`, `declined`, `expired`, `cancelled`, `pa
 
 PostgreSQL stores `daterange` canonically with an exclusive upper bound. UI date selection, billed-day semantics, booking windows, cancellations, and inspection timeouts still need agreement in `DECISIONS.md` before booking implementation. Do not infer billing rules from the range representation.
 
-**Wait before real data integration:** B1.2/B1.3 must add profile/listing permissions, category templates, storage buckets/policies, and seeds. Profiles are not automatically created at signup yet. Later tasks must add booking transitions/overlap checks, review eligibility, chat participant policies, Realtime publication, notifications, payment webhooks, and admin/dispute logic. Use agreed UI mocks until each handoff is ready. Auth/client integration is B0.4/B1.1, not part of this migration.
+**Wait before real listing integration:** Categories are read-only and currently empty. B1.2/B1.3 must add profile/listing permissions, category templates, storage buckets/policies, and seeds. Profiles are not automatically created at signup yet. Later tasks must add booking transitions/overlap checks, review eligibility, chat participant policies, Realtime publication, notifications, payment webhooks, and admin/dispute logic. Use agreed UI mocks until each handoff is ready. Auth integration is B1.1.
 
 ## Entity relationships
 
