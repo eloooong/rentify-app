@@ -130,7 +130,7 @@ Person A uses Claude Code (reads `CLAUDE.md`, which points to `AGENTS.md`). Pers
 ## Dependency notes
 
 - Dependencies are pinned to exact versions. New packages are added in a dedicated PR that Person B reviews.
-- `npm audit` reports high-severity entries from one unpatched [`braces` advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), through tooling that matches file patterns (the Next.js ESLint chain and the shadcn CLI). Since the shadcn package was added (PR #14), the chain also shows up under `npm audit --omit=dev`, because `shadcn` is listed as a production dependency. The app only needs it at build time, for `shadcn/tailwind.css`. Do not run `npm audit fix --force`: it proposes a breaking downgrade.
+- `npm audit --omit=dev` (production dependencies) reports 0 vulnerabilities. The full `npm audit` reports high-severity entries from one unpatched [`braces` advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), only through development tooling that matches file patterns: the Next.js ESLint chain and the shadcn CLI. `shadcn` is a devDependency because the app only imports `shadcn/tailwind.css` at build time; keep it there, so the CLI's tree stays out of production. Do not run `npm audit fix --force`: it proposes a breaking downgrade.
 - Next.js [supports ESLint 10](https://nextjs.org/docs/app/api-reference/config/eslint#setup-eslint), but some bundled plugins still declare older peer ranges, so npm may print peer-dependency warnings.
 
 ## More documentation
