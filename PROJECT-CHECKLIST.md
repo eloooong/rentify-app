@@ -4,12 +4,17 @@
 
 Keep this file open while working. It is the shared progress checklist, updated by the person finishing each task. It does not update automatically.
 
-**Latest check: 18 October 2026 (Asia/Manila).** [PR #11](https://github.com/eloooong/rentify-app/pull/11) is merged with app and database CI passing; the verified local Supabase setup is now recorded on `main`. No new feature has merged since that setup, and no feature PR is open at this check. B1.1 authentication has not started.
+**Latest check: 18 October 2026 (Asia/Manila).** [PR #11](https://github.com/eloooong/rentify-app/pull/11) is merged with app and database CI passing; the verified local Supabase setup is now recorded on `main`. No new feature has merged since that setup. B1.1 authentication has not started.
+
+**New work awaiting merge:**
+
+- [PR #12 — Person A checklist update](https://github.com/eloooong/rentify-app/pull/12): A reports mobile/desktop shell accessibility and keyboard checks passed. GitHub reports a merge conflict with `main`; A owns updating that branch while preserving B0.3/B0.4 as complete. The A0.2 status row below remains unchanged until that handoff is reconciled.
+- [PR #14 — shadcn/ui](https://github.com/eloooong/rentify-app/pull/14): implementation and dependency/configuration changes are proposed; CI and B's dependency review gate merge. It is not installed on `main` yet. Do not edit the package/lockfile in parallel with this PR.
 
 ## Next session — who works and who waits
 
 - [ ] **Person B — next: B1.1 authentication.** Start a new branch from updated `main`; implement signup/email verification, login/logout, password reset, session refresh, and protected routes. Publish the auth handoff and tests before A connects session-dependent UI. This is the next task, not work already in progress.
-- [ ] **Person A — safe parallel work:** A0.3 README/architecture refresh, A0.2 mobile/accessibility verification, or listing screens with clearly labeled mocks. Coordinate the exact shadcn dependency/configuration scope with B before installation.
+- [ ] **Person A — next:** reconcile the checklist update in #12 against current `main`, then continue A0.3 README/architecture docs or listing screens with clearly labeled mocks. Keep the shadcn changes in #14 separate until dependency review and CI pass.
 - **WAIT for A:** real authentication waits for B1.1; real profiles, listings, and uploads wait for B1.2/B1.3. Neither person needs to wait for the other to begin the separate tasks above. Only one person edits this checklist or shared configuration at a time.
 
 ## Where we are now
