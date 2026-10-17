@@ -6,14 +6,15 @@ Keep this file open while working. It is the shared progress checklist, updated 
 
 ## Where we are now
 
-| Item                                                             | Status                                                                            |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| B0.1 app scaffold and CI                                         | Built; local checks and the initial GitHub CI run passed                          |
-| [Scaffold PR #1](https://github.com/eloooong/rentify-app/pull/1) | Draft; waiting for Person A's review and merge                                    |
-| Shared agent rules, Supabase, application features               | Not implemented                                                                   |
-| Person A can do now                                              | Audit Figma, identify missing mobile screens, prepare design tokens, review PR #1 |
-| Person B can do now                                              | Prepare shared rules and policy decisions; address scaffold review feedback       |
-| Next coding handoff                                              | Merge PR #1, then start separate task branches from the updated `main`            |
+| Item                                                             | Status                                                                                                      |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| B0.1 app scaffold and CI                                         | Complete; PR #1 merged and scaffold checks passed                                                           |
+| [Scaffold PR #1](https://github.com/eloooong/rentify-app/pull/1) | Merged on 17 October 2026                                                                                   |
+| B0.2 shared agent rules                                          | Prepared on `chore/shared-agent-rules`; pending PR review and merge                                         |
+| Supabase and application features                                | Not implemented                                                                                             |
+| Person A can do now                                              | Audit Figma, prepare tokens, and review the shared-rules PR; coordinate package/configuration edits with B  |
+| Person B can do now                                              | Finish B0.2 review/merge and prepare Supabase setup and policy decisions                                    |
+| Next coding handoff                                              | After B0.2 merges: A adds the `CLAUDE.md` pointer; B starts Supabase/schema foundation on a separate branch |
 
 Check off a task after its acceptance checks pass and its PR is merged. Preparatory work can happen while a dependency is pending; do not mark a feature done just because it works against a mock.
 
@@ -21,7 +22,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 **Person B — you**
 
-- [ ] **B0.1** Finish Person A's review and merge PR #1. Scaffold implementation and initial CI are already done.
+- [x] **B0.1** Scaffold and CI verified; [PR #1](https://github.com/eloooong/rentify-app/pull/1) merged.
 - [ ] **B0.2** Add `AGENTS.md`: task scope, folder ownership, security basics, checks, and shared-file coordination.
 - [ ] **B0.3** Add the initial schema migration and schema diagram; share the tables and booking states with A. Initial tables are not a usable handoff until the required access policies exist.
 - [ ] **B0.4** Set up Supabase local development, typed clients, generated database types, and verified setup instructions.
@@ -37,7 +38,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 **Together:** record decisions in `DECISIONS.md`: course demo or live pilot, currency, date boundaries, deposits, cancellation/refunds, verification, gateway, and minimum dispute handling. Label unresolved decisions as pending.
 
-**WAIT:** Both wait for PR #1 to merge before starting new application branches. A waits for B0.2 before adding the `CLAUDE.md` pointer. Figma work and policy discussions can continue immediately.
+**WAIT:** The scaffold wait point is cleared: start separate task branches from updated `main`. A waits for B0.2 to merge before adding the `CLAUDE.md` pointer. Figma work, token preparation, and policy discussions can continue. Coordinate shared-file and dependency changes before either tool edits them.
 
 ## 1. Accounts and listings
 
