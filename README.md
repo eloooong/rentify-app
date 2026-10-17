@@ -1,5 +1,7 @@
 # Rentify
 
+**Start here: [Shared checklist for Person A and Person B](PROJECT-CHECKLIST.md)** — current tasks, ownership, and where to stop/wait to avoid conflicts.
+
 A peer-to-peer gadget rental marketplace for owners and renters. The first release targets a responsive web app, using Next.js App Router, TypeScript, Tailwind CSS, and Supabase.
 
 ## Current milestone
