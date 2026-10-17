@@ -6,16 +6,17 @@ Keep this file open while working. It is the shared progress checklist, updated 
 
 ## Where we are now
 
-| Item                                                             | Status                                                                                                                                           |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| B0.1 app scaffold and CI                                         | Complete; PR #1 merged and scaffold checks passed                                                                                                |
-| [Scaffold PR #1](https://github.com/eloooong/rentify-app/pull/1) | Merged on 17 October 2026                                                                                                                        |
-| B0.2 shared agent rules                                          | Complete; [PR #2](https://github.com/eloooong/rentify-app/pull/2) merged                                                                         |
-| B0.3 schema foundation                                           | [PR #4](https://github.com/eloooong/rentify-app/pull/4): reset and 54 SQL checks passed in CI; pending review/merge; client access still blocked |
-| Supabase local runtime and application clients                   | Pending B0.4; Docker is not installed on Person B's machine                                                                                      |
-| Person A can do now                                              | Add the `CLAUDE.md` pointer, prepare tokens/UI components, and build the app shell; coordinate package/configuration edits with B                |
-| Person B can do now                                              | Validate B0.3 schema/access tests and publish the database contract, then prepare B0.4                                                           |
-| Next coding handoff                                              | A can continue presentation work with mocks; real listing access waits for B1.2/B1.3 permissions/storage                                         |
+| Item                                                             | Status                                                                                                                                                                                                              |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B0.1 app scaffold and CI                                         | Complete; PR #1 merged and scaffold checks passed                                                                                                                                                                   |
+| [Scaffold PR #1](https://github.com/eloooong/rentify-app/pull/1) | Merged on 17 October 2026                                                                                                                                                                                           |
+| B0.2 shared agent rules                                          | Complete; [PR #2](https://github.com/eloooong/rentify-app/pull/2) merged                                                                                                                                            |
+| B0.3 schema foundation                                           | [PR #4](https://github.com/eloooong/rentify-app/pull/4): reset and 54 SQL checks passed in CI; pending review/merge; client access still blocked                                                                    |
+| Supabase local runtime and application clients                   | Pending B0.4; Docker is not installed on Person B's machine                                                                                                                                                         |
+| Person A status                                                  | `CLAUDE.md` pointer, draft tokens and draft FAQ/legal text are pushed on separate branches with PRs pending. Usability kit merged (PR #3). Figma access, shadcn/package approval and mobile designs block A0.1/A0.2 |
+| Person A can do now                                              | Add the `CLAUDE.md` pointer, prepare tokens/UI components, and build the app shell; coordinate package/configuration edits with B                                                                                   |
+| Person B can do now                                              | Validate B0.3 schema/access tests and publish the database contract, then prepare B0.4                                                                                                                              |
+| Next coding handoff                                              | A can continue presentation work with mocks; real listing access waits for B1.2/B1.3 permissions/storage                                                                                                            |
 
 Check off a task after its acceptance checks pass and its PR is merged. Preparatory work can happen while a dependency is pending; do not mark a feature done just because it works against a mock.
 
@@ -31,11 +32,11 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 **Person A — your friend**
 
-- [ ] Audit Figma: mobile and desktop listing, booking, checkout, chat, and checklist screens; export tokens.
-- [ ] **A0.1** Map approved tokens into CSS/Tailwind and initialize shadcn/ui. Coordinate dependency changes with B before installing.
-- [ ] **A0.2** Build the responsive app shell: header, footer, layout, navigation, and skip link.
-- [ ] **A0.3** Expand the starter README and architecture documentation using the actual project.
-- [ ] **A0.4** Add a short `CLAUDE.md` pointing to the merged `AGENTS.md`.
+- [ ] Audit Figma: mobile and desktop listing, booking, checkout, chat, and checklist screens; export tokens. _In progress: Figma API access is blocked (View seat), so the audit used design screenshots. Only desktop home, All Items, listing detail, header states and two modals were seen; no mobile frames. Draft tokens (approximate, brand primary `#E55910`) are in `docs/design-tokens.json` on `chore/design-tokens-draft`, PR pending. Real values and mobile frames are still needed._
+- [ ] **A0.1** Map approved tokens into CSS/Tailwind and initialize shadcn/ui. Coordinate dependency changes with B before installing. _Not started: waiting for B's approval to change `package.json` and the lockfile, and for real Figma values._
+- [ ] **A0.2** Build the responsive app shell: header, footer, layout, navigation, and skip link. _Not started: follows A0.1; needs mobile designs._
+- [ ] **A0.3** Expand the starter README and architecture documentation using the actual project. _Not started._
+- [ ] **A0.4** Add a short `CLAUDE.md` pointing to the merged `AGENTS.md`. _Done on branch `chore/claude-md-pointer` (11 lines); PR pending review. Tick after merge._
 
 **Together:** record decisions in `DECISIONS.md`: course demo or live pilot, currency, date boundaries, deposits, cancellation/refunds, verification, gateway, and minimum dispute handling. Label unresolved decisions as pending.
 
@@ -93,7 +94,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 - [ ] **A3.1** Booking-linked chat, unread state, retries, and accessible message announcements.
 - [ ] **A3.2** Notification bell/center, read state, and booking/chat links.
 - [ ] **A3.3** Two-sided reviews and rating displays after completed rentals.
-- [ ] **A3.4** Help center, feedback form, and draft legal/prohibited-items pages.
+- [ ] **A3.4** Help center, feedback form, and draft legal/prohibited-items pages. _Content drafted early in `docs/faq-draft.md` and `docs/legal-draft.md` on `docs/faq-legal-draft`, PR pending. Policies not yet decided are marked TBD. No pages built._
 
 **WAIT:** A waits for participant access policies and Realtime setup before connecting chat, and review policies before accepting real reviews. A can build presentation components meanwhile. B waits for the agreed return-inspection timeout and dispute policy before implementing automatic deposit release. Never bypass privacy rules or invent a refund policy to unblock a demo.
 
@@ -110,7 +111,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 - [ ] **A4.1** Accessibility audit and fixes; report issues in B's screens to B.
 - [ ] **A4.2** Mobile/performance polish and consistent loading, empty, error, and missing-page states.
-- [ ] **A4.3** Usability test kit; run sessions, record findings, and prioritize fixes.
+- [ ] **A4.3** Usability test kit; run sessions, record findings, and prioritize fixes. _Kit drafted and merged in [PR #3](https://github.com/eloooong/rentify-app/pull/3) (`docs/usability-test.md`). Sessions not run yet, so leave unticked._
 
 **WAIT:** Both pause feature additions during the final test round. Assign each finding to one person. Do not start live payments or a real rental pilot until the agreed security, payment, evidence, dispute, and recovery checks pass. Test-mode demos can continue.
 
