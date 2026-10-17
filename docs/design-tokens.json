@@ -8,19 +8,18 @@
       "No spacing, radius, type scale, shadow, or breakpoint values were measured.",
       "No mobile frames were seen, so mobile values are unknown."
     ],
-    "nextStep": "Replace with values from Figma variables or styles once access is available, then map into app/globals.css under @theme."
+    "nextStep": "Replace with values from Figma variables or styles once access is available, then map into app/globals.css under @theme.",
+    "notes": [
+      "A second, brighter orange (#FB7800) appears on the Confirm buttons in both modals. It is not a token for now. Revisit when the Figma values are available."
+    ]
   },
   "color": {
     "brand": {
       "primary": {
         "value": "#E55910",
         "source": "Nav links, Lend button, section accents",
+        "decision": "Chosen as the brand primary by Person A.",
         "note": "Hero uses a semi-transparent orange overlay over a photo (about #DE6934 on screen); treat that as an overlay, not a token."
-      },
-      "action": {
-        "value": "#FB7800",
-        "source": "Confirm button in both modals",
-        "note": "Differs from primary. Decide which orange is canonical."
       }
     },
     "surface": {
