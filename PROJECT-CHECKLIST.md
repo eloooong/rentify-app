@@ -4,6 +4,14 @@
 
 Keep this file open while working. It is the shared progress checklist, updated by the person finishing each task. It does not update automatically.
 
+**Latest check: 18 October 2026 (Asia/Manila).** [PR #11](https://github.com/eloooong/rentify-app/pull/11) is merged with app and database CI passing; the verified local Supabase setup is now recorded on `main`. No new feature has merged since that setup, and no feature PR is open at this check. B1.1 authentication has not started.
+
+## Next session — who works and who waits
+
+- [ ] **Person B — next: B1.1 authentication.** Start a new branch from updated `main`; implement signup/email verification, login/logout, password reset, session refresh, and protected routes. Publish the auth handoff and tests before A connects session-dependent UI. This is the next task, not work already in progress.
+- [ ] **Person A — safe parallel work:** A0.3 README/architecture refresh, A0.2 mobile/accessibility verification, or listing screens with clearly labeled mocks. Coordinate the exact shadcn dependency/configuration scope with B before installation.
+- **WAIT for A:** real authentication waits for B1.1; real profiles, listings, and uploads wait for B1.2/B1.3. Neither person needs to wait for the other to begin the separate tasks above. Only one person edits this checklist or shared configuration at a time.
+
 ## Where we are now
 
 | Item                                                             | Status                                                                                                                                                                                                 |
