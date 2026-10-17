@@ -26,7 +26,9 @@ npm run dev
 
 Use `npm run db:reset` only when you intend to **discard this project's local database contents** and reapply every migration. It is explicitly local and does not use `--linked` or production credentials. `npm run db:stop` stops the stack while retaining development data. CI alone uses `--no-backup` for disposable teardown.
 
-On Person B's Windows machine, WSL's Virtual Machine Platform feature was enabled successfully on 18 October 2026, but a restart is required before Docker can install. Docker's signed, checksum-verified installer stopped at that prerequisite. Local database startup, environment generation, and smoke checks remain pending that restart/install. `.github/workflows/database.yml` independently runs disposable Linux database/API verification; check the PR result before relying on it.
+Person B verified this setup on Windows on **18 October 2026**, after enabling Virtual Machine Platform and restarting: WSL 3.0.3, Docker Desktop 4.95.0 (Linux engine 29.8.2), and the pinned Supabase CLI 2.121.0. Docker's installer signature and release checksum were checked before installation. Reopen existing terminals after installing Docker if they have not picked up its new PATH entry.
+
+Local `db:start`, `db:reset`, `db:env`, `db:lint`, `db:test` (**63 checks**), `db:smoke`, and `db:types` all passed. Regenerated types matched the committed file exactly. Studio and the email inbox returned HTTP 200; `.env.local` contains only the three documented public settings and is ignored by Git. The test fixtures roll back, and categories remain empty until the seed task. [PR #9](https://github.com/eloooong/rentify-app/pull/9) is merged; its independent Linux database/API CI also passed. Hosted Supabase, deployed environments, and authentication flows are not configured by this local setup.
 
 ## Typed clients
 
