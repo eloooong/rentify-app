@@ -1,0 +1,840 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+export type Database = {
+  public: {
+    Tables: {
+      audit_log: {
+        Row: {
+          action: string;
+          actor_id: string | null;
+          created_at: string;
+          details: NonNullable<Json>;
+          id: string;
+          target_id: string | null;
+          target_table: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          actor_id?: string | null;
+          created_at?: string;
+          details?: NonNullable<Json>;
+          id?: string;
+          target_id?: string | null;
+          target_table: string;
+          updated_at?: string;
+        };
+        Update: {
+          action?: string;
+          actor_id?: string | null;
+          created_at?: string;
+          details?: NonNullable<Json>;
+          id?: string;
+          target_id?: string | null;
+          target_table?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bookings: {
+        Row: {
+          cancellation_terms: NonNullable<Json>;
+          created_at: string;
+          currency: string;
+          deposit_amount: number;
+          id: string;
+          listing_id: string;
+          owner_id: string;
+          rental_amount: number;
+          rental_period: unknown;
+          renter_id: string;
+          status: Database["public"]["Enums"]["booking_status"];
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cancellation_terms?: NonNullable<Json>;
+          created_at?: string;
+          currency?: string;
+          deposit_amount: number;
+          id?: string;
+          listing_id: string;
+          owner_id: string;
+          rental_amount: number;
+          rental_period: unknown;
+          renter_id: string;
+          status?: Database["public"]["Enums"]["booking_status"];
+          updated_at?: string;
+        };
+        Update: {
+          cancellation_terms?: NonNullable<Json>;
+          created_at?: string;
+          currency?: string;
+          deposit_amount?: number;
+          id?: string;
+          listing_id?: string;
+          owner_id?: string;
+          rental_amount?: number;
+          rental_period?: unknown;
+          renter_id?: string;
+          status?: Database["public"]["Enums"]["booking_status"];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bookings_listing_id_owner_id_fkey";
+            columns: ["listing_id", "owner_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id", "owner_id"];
+          },
+          {
+            foreignKeyName: "bookings_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bookings_renter_id_fkey";
+            columns: ["renter_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      categories: {
+        Row: {
+          attribute_schema: NonNullable<Json>;
+          created_at: string;
+          id: string;
+          name: string;
+          parent_id: string | null;
+          slug: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          attribute_schema?: NonNullable<Json>;
+          created_at?: string;
+          id?: string;
+          name: string;
+          parent_id?: string | null;
+          slug: string;
+          updated_at?: string;
+        };
+        Update: {
+          attribute_schema?: NonNullable<Json>;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          parent_id?: string | null;
+          slug?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      condition_reports: {
+        Row: {
+          booking_id: string;
+          checklist: NonNullable<Json>;
+          created_at: string;
+          id: string;
+          notes: string;
+          owner_confirmed_at: string | null;
+          photo_paths: string[];
+          renter_confirmed_at: string | null;
+          stage: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          booking_id: string;
+          checklist?: NonNullable<Json>;
+          created_at?: string;
+          id?: string;
+          notes?: string;
+          owner_confirmed_at?: string | null;
+          photo_paths?: string[];
+          renter_confirmed_at?: string | null;
+          stage: string;
+          updated_at?: string;
+        };
+        Update: {
+          booking_id?: string;
+          checklist?: NonNullable<Json>;
+          created_at?: string;
+          id?: string;
+          notes?: string;
+          owner_confirmed_at?: string | null;
+          photo_paths?: string[];
+          renter_confirmed_at?: string | null;
+          stage?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "condition_reports_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      conversations: {
+        Row: {
+          booking_id: string;
+          created_at: string;
+          id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          booking_id: string;
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+        };
+        Update: {
+          booking_id?: string;
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "conversations_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: true;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      listing_photos: {
+        Row: {
+          created_at: string;
+          id: string;
+          listing_id: string;
+          position: number;
+          storage_path: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          listing_id: string;
+          position: number;
+          storage_path: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          listing_id?: string;
+          position?: number;
+          storage_path?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "listing_photos_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      listings: {
+        Row: {
+          attributes: NonNullable<Json>;
+          category_id: string;
+          condition: string;
+          created_at: string;
+          currency: string;
+          daily_price_amount: number;
+          deposit_amount: number;
+          description: string;
+          id: string;
+          owner_id: string;
+          pickup_area: string;
+          status: string;
+          title: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          attributes?: NonNullable<Json>;
+          category_id: string;
+          condition: string;
+          created_at?: string;
+          currency?: string;
+          daily_price_amount: number;
+          deposit_amount: number;
+          description?: string;
+          id?: string;
+          owner_id: string;
+          pickup_area: string;
+          status?: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          attributes?: NonNullable<Json>;
+          category_id?: string;
+          condition?: string;
+          created_at?: string;
+          currency?: string;
+          daily_price_amount?: number;
+          deposit_amount?: number;
+          description?: string;
+          id?: string;
+          owner_id?: string;
+          pickup_area?: string;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "listings_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "listings_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      messages: {
+        Row: {
+          body: string;
+          conversation_id: string;
+          created_at: string;
+          id: string;
+          read_at: string | null;
+          sender_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          body: string;
+          conversation_id: string;
+          created_at?: string;
+          id?: string;
+          read_at?: string | null;
+          sender_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          conversation_id?: string;
+          created_at?: string;
+          id?: string;
+          read_at?: string | null;
+          sender_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey";
+            columns: ["conversation_id"];
+            isOneToOne: false;
+            referencedRelation: "conversations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey";
+            columns: ["sender_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notifications: {
+        Row: {
+          created_at: string;
+          id: string;
+          payload: NonNullable<Json>;
+          read_at: string | null;
+          type: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          payload?: NonNullable<Json>;
+          read_at?: string | null;
+          type: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          payload?: NonNullable<Json>;
+          read_at?: string | null;
+          type?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payments: {
+        Row: {
+          amount: number;
+          booking_id: string;
+          created_at: string;
+          currency: string;
+          gateway: string | null;
+          gateway_reference: string | null;
+          id: string;
+          status: string;
+          type: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          booking_id: string;
+          created_at?: string;
+          currency?: string;
+          gateway?: string | null;
+          gateway_reference?: string | null;
+          id?: string;
+          status?: string;
+          type: string;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          booking_id?: string;
+          created_at?: string;
+          currency?: string;
+          gateway?: string | null;
+          gateway_reference?: string | null;
+          id?: string;
+          status?: string;
+          type?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profile_private: {
+        Row: {
+          created_at: string;
+          phone: string | null;
+          phone_verified_at: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          phone?: string | null;
+          phone_verified_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          phone?: string | null;
+          phone_verified_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_private_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      profiles: {
+        Row: {
+          account_status: string;
+          avatar_path: string | null;
+          created_at: string;
+          display_name: string;
+          id: string;
+          role: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          account_status?: string;
+          avatar_path?: string | null;
+          created_at?: string;
+          display_name: string;
+          id: string;
+          role?: string;
+          updated_at?: string;
+        };
+        Update: {
+          account_status?: string;
+          avatar_path?: string | null;
+          created_at?: string;
+          display_name?: string;
+          id?: string;
+          role?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      reports: {
+        Row: {
+          booking_id: string | null;
+          created_at: string;
+          evidence: NonNullable<Json>;
+          id: string;
+          listing_id: string | null;
+          reason: string;
+          reported_user_id: string | null;
+          reporter_id: string;
+          resolution: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          status: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          booking_id?: string | null;
+          created_at?: string;
+          evidence?: NonNullable<Json>;
+          id?: string;
+          listing_id?: string | null;
+          reason: string;
+          reported_user_id?: string | null;
+          reporter_id: string;
+          resolution?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          booking_id?: string | null;
+          created_at?: string;
+          evidence?: NonNullable<Json>;
+          id?: string;
+          listing_id?: string | null;
+          reason?: string;
+          reported_user_id?: string | null;
+          reporter_id?: string;
+          resolution?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reports_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reports_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reports_reported_user_id_fkey";
+            columns: ["reported_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey";
+            columns: ["reporter_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reports_resolved_by_fkey";
+            columns: ["resolved_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reviews: {
+        Row: {
+          author_id: string;
+          booking_id: string;
+          comment: string;
+          created_at: string;
+          id: string;
+          rating: number;
+          subject_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          author_id: string;
+          booking_id: string;
+          comment?: string;
+          created_at?: string;
+          id?: string;
+          rating: number;
+          subject_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          author_id?: string;
+          booking_id?: string;
+          comment?: string;
+          created_at?: string;
+          id?: string;
+          rating?: number;
+          subject_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reviews_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_subject_id_fkey";
+            columns: ["subject_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      booking_status:
+        | "requested"
+        | "accepted"
+        | "declined"
+        | "expired"
+        | "cancelled"
+        | "paid"
+        | "handed_over"
+        | "returned"
+        | "completed"
+        | "disputed";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+};
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = {
+  public: {
+    Enums: {
+      booking_status: [
+        "requested",
+        "accepted",
+        "declined",
+        "expired",
+        "cancelled",
+        "paid",
+        "handed_over",
+        "returned",
+        "completed",
+        "disputed",
+      ],
+    },
+  },
+} as const;
