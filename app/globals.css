@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/*
+ * Rentify design tokens (DRAFT).
+ * Source: docs/design-tokens.json. The colors are approximate, sampled from
+ * screenshots of the 2023 desktop designs, not exported from Figma.
+ * Replace with the real values once available. Components must use these
+ * tokens only (no hard-coded hex values).
+ */
+@theme {
+  /* Brand primary, chosen by Person A. Use for backgrounds, borders and large elements. */
+  --color-brand: #e55910;
+  --color-brand-foreground: #ffffff;
+  /*
+   * PROPOSAL, not from Figma. #e55910 on white is 3.64:1, which fails WCAG 2.1 AA
+   * for normal-size text. Use this darker orange (5.18:1 with white, both ways)
+   * for small orange text, links, and buttons with small white text.
+   * Needs the designer's approval; changing this one value updates every use.
+   */
+  --color-brand-strong: #c2410c;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #efefef;
+  --color-surface-tint: #efeffd;
+
+  --color-fg: #000000;
+  --color-fg-body: #484866;
+  /* 4.3:1 on white: below AA for normal text. Use only for large or decorative text. */
+  --color-fg-muted: #787890;
+  --color-border: #eaeaea;
+
+  /* The design looks like Poppins, but that is unverified. System fonts until confirmed. */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-strong);
+    outline-offset: 2px;
+  }
+}
