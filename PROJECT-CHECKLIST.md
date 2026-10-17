@@ -6,16 +6,16 @@ Keep this file open while working. It is the shared progress checklist, updated 
 
 ## Where we are now
 
-| Item                                                             | Status                                                                                                                                           |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| B0.1 app scaffold and CI                                         | Complete; PR #1 merged and scaffold checks passed                                                                                                |
-| [Scaffold PR #1](https://github.com/eloooong/rentify-app/pull/1) | Merged on 17 October 2026                                                                                                                        |
-| B0.2 shared agent rules                                          | Complete; [PR #2](https://github.com/eloooong/rentify-app/pull/2) merged                                                                         |
-| B0.3 schema foundation                                           | [PR #4](https://github.com/eloooong/rentify-app/pull/4): reset and 54 SQL checks passed in CI; pending review/merge; client access still blocked |
-| Supabase local runtime and application clients                   | Pending B0.4; Docker is not installed on Person B's machine                                                                                      |
-| Person A can do now                                              | Add the `CLAUDE.md` pointer, prepare tokens/UI components, and build the app shell; coordinate package/configuration edits with B                |
-| Person B can do now                                              | Validate B0.3 schema/access tests and publish the database contract, then prepare B0.4                                                           |
-| Next coding handoff                                              | A can continue presentation work with mocks; real listing access waits for B1.2/B1.3 permissions/storage                                         |
+| Item                                                             | Status                                                                                                                            |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| B0.1 app scaffold and CI                                         | Complete; PR #1 merged and scaffold checks passed                                                                                 |
+| [Scaffold PR #1](https://github.com/eloooong/rentify-app/pull/1) | Merged on 17 October 2026                                                                                                         |
+| B0.2 shared agent rules                                          | Complete; [PR #2](https://github.com/eloooong/rentify-app/pull/2) merged                                                          |
+| B0.3 schema foundation                                           | Complete; [PR #4](https://github.com/eloooong/rentify-app/pull/4) merged; reset, 54 SQL checks, and generated types passed in CI  |
+| Supabase local runtime and application clients                   | B0.4 in progress on `feat/supabase-clients`; WSL feature enabled, restart required before Docker install/local checks             |
+| Person A can do now                                              | Add the `CLAUDE.md` pointer, prepare tokens/UI components, and build the app shell; coordinate package/configuration edits with B |
+| Person B can do now                                              | Finish B0.4 clients/tooling checks; restart Windows, install Docker, then verify the local stack                                  |
+| Next coding handoff                                              | A can continue presentation work with mocks; real listing access waits for B1.2/B1.3 permissions/storage                          |
 
 Check off a task after its acceptance checks pass and its PR is merged. Preparatory work can happen while a dependency is pending; do not mark a feature done just because it works against a mock.
 
@@ -25,7 +25,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 - [x] **B0.1** Scaffold and CI verified; [PR #1](https://github.com/eloooong/rentify-app/pull/1) merged.
 - [x] **B0.2** Shared rules and ownership added in `AGENTS.md`; [PR #2](https://github.com/eloooong/rentify-app/pull/2) merged.
-- [ ] **B0.3** Add the initial schema migration and schema diagram; share the tables and booking states with A. Initial tables are not a usable handoff until the required access policies exist.
+- [x] **B0.3** Initial schema, access tests, generated types, and [schema contract](supabase/README.md) published; [PR #4](https://github.com/eloooong/rentify-app/pull/4) merged. Feature permissions still gate integration.
 - [ ] **B0.4** Set up Supabase local development, typed clients, generated database types, and verified setup instructions.
 - [ ] Complete the remaining setup: agree development environments, configure branch protection, and connect Vercel previews.
 
@@ -39,7 +39,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 **Together:** record decisions in `DECISIONS.md`: course demo or live pilot, currency, date boundaries, deposits, cancellation/refunds, verification, gateway, and minimum dispute handling. Label unresolved decisions as pending.
 
-**WAIT:** Scaffold and shared-rules wait points are cleared: start separate task branches from updated `main`; A can add the `CLAUDE.md` pointer. B owns the open schema migration work. A can continue tokens/UI with mocks, but real listing data/uploads wait for the feature permissions and storage handoff. Coordinate shared-file and dependency changes before either tool edits them.
+**WAIT:** Scaffold, shared rules, and initial schema are merged: start separate task branches from updated `main`; A can add the `CLAUDE.md` pointer. B owns the B0.4 dependency/configuration and category-read migration work; do not start another migration PR until it merges. A can continue tokens/UI with mocks, but real listing data/uploads wait for the feature permissions and storage handoff. Coordinate shared-file and dependency changes before either tool edits them. B0.4 cannot be marked complete until the Windows restart, Docker installation, local verification, review, and merge are finished. A owns the top-level README refresh; use the linked Supabase setup guide for current backend instructions.
 
 ## 1. Accounts and listings
 
