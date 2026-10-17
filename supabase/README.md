@@ -31,7 +31,7 @@ supabase gen types typescript --local --schema public > lib/supabase/database.ty
 npm exec -- prettier --write lib/supabase/database.types.ts
 ```
 
-Use a UTF-8 output redirect (for example PowerShell 7 or Bash). Create the parent directory first if it does not exist. CI generates and formats the same output, compares it with the committed file, and uploads a `database-types` artifact. The initial bootstrap run can supply that artifact before the generated file is committed; every completed schema PR must include the generated file. Later schema changes require a new migration and regenerated types in the same PR. Never edit an applied migration.
+Use a UTF-8 output redirect (for example PowerShell 7 or Bash). Create the parent directory first if it does not exist. CI generates and formats the same output, requires an exact match with the committed file, and uploads a `database-types` artifact. A missing or outdated types file fails the check. Later schema changes require a new migration and regenerated types in the same PR. Never edit an applied migration.
 
 The pgTAP fixtures/grants are enclosed in a rolled-back transaction. The tests exercise grant denial, RLS denial even when temporary table grants exist, trusted backend reads, audit immutability for that role, ownership consistency, and invalid values. They do not establish booking or review eligibility rules that have not been implemented. Replace foundation deny-all expectations with the intended allow/deny cases as feature-specific policies are added.
 

@@ -8,6 +8,7 @@ on:
       - lib/supabase/database.types.ts
       - .github/workflows/database.yml
       - .prettierrc.json
+      - .node-version
       - package.json
       - package-lock.json
   push:
@@ -17,6 +18,7 @@ on:
       - lib/supabase/database.types.ts
       - .github/workflows/database.yml
       - .prettierrc.json
+      - .node-version
       - package.json
       - package-lock.json
 
@@ -59,10 +61,8 @@ jobs:
       - name: Generate types and check drift
         run: |
           supabase gen types typescript --local --schema public > /tmp/database.raw.types.ts
-          ./node_modules/.bin/prettier --config .prettierrc.json /tmp/database.raw.types.ts > /tmp/database.types.ts
-          if [ -f lib/supabase/database.types.ts ]; then
-            diff -u lib/supabase/database.types.ts /tmp/database.types.ts
-          fi
+          ./node_modules/.bin/prettier --config .prettierrc.json --parser typescript < /tmp/database.raw.types.ts > /tmp/database.types.ts
+          diff -u lib/supabase/database.types.ts /tmp/database.types.ts
       - name: Save generated types
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

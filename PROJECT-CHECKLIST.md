@@ -6,16 +6,16 @@ Keep this file open while working. It is the shared progress checklist, updated 
 
 ## Where we are now
 
-| Item                                                             | Status                                                                                                                            |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| B0.1 app scaffold and CI                                         | Complete; PR #1 merged and scaffold checks passed                                                                                 |
-| [Scaffold PR #1](https://github.com/eloooong/rentify-app/pull/1) | Merged on 17 October 2026                                                                                                         |
-| B0.2 shared agent rules                                          | Complete; [PR #2](https://github.com/eloooong/rentify-app/pull/2) merged                                                          |
-| B0.3 schema foundation                                           | In progress on `feat/initial-schema`; client access remains blocked until feature policies are added                              |
-| Supabase local runtime and application clients                   | Pending B0.4; Docker is not installed on Person B's machine                                                                       |
-| Person A can do now                                              | Add the `CLAUDE.md` pointer, prepare tokens/UI components, and build the app shell; coordinate package/configuration edits with B |
-| Person B can do now                                              | Validate B0.3 schema/access tests and publish the database contract, then prepare B0.4                                            |
-| Next coding handoff                                              | A can continue presentation work with mocks; real listing access waits for B1.2/B1.3 permissions/storage                          |
+| Item                                                             | Status                                                                                                                                           |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B0.1 app scaffold and CI                                         | Complete; PR #1 merged and scaffold checks passed                                                                                                |
+| [Scaffold PR #1](https://github.com/eloooong/rentify-app/pull/1) | Merged on 17 October 2026                                                                                                                        |
+| B0.2 shared agent rules                                          | Complete; [PR #2](https://github.com/eloooong/rentify-app/pull/2) merged                                                                         |
+| B0.3 schema foundation                                           | [PR #4](https://github.com/eloooong/rentify-app/pull/4): reset and 54 SQL checks passed in CI; pending review/merge; client access still blocked |
+| Supabase local runtime and application clients                   | Pending B0.4; Docker is not installed on Person B's machine                                                                                      |
+| Person A can do now                                              | Add the `CLAUDE.md` pointer, prepare tokens/UI components, and build the app shell; coordinate package/configuration edits with B                |
+| Person B can do now                                              | Validate B0.3 schema/access tests and publish the database contract, then prepare B0.4                                                           |
+| Next coding handoff                                              | A can continue presentation work with mocks; real listing access waits for B1.2/B1.3 permissions/storage                                         |
 
 Check off a task after its acceptance checks pass and its PR is merged. Preparatory work can happen while a dependency is pending; do not mark a feature done just because it works against a mock.
 
