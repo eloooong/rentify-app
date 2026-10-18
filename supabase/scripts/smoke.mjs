@@ -43,7 +43,13 @@ await writeFile(
 );
 await writeFile(
   join(fixture, "next.config.mjs"),
-  "export default { devIndicators: false };\n",
+  "export default { devIndicators: false, agentRules: false };\n",
+);
+await writeFile(
+  join(fixture, "jsconfig.json"),
+  JSON.stringify({
+    compilerOptions: { baseUrl: projectRoot, paths: { "@/*": ["./*"] } },
+  }),
 );
 await writeFile(
   join(fixture, "app/layout.js"),
