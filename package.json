@@ -22,6 +22,9 @@
     "db:env": "node supabase/scripts/env.mjs",
     "db:types": "node supabase/scripts/types.mjs",
     "db:smoke": "node supabase/scripts/smoke.mjs",
+    "db:demo": "node supabase/scripts/demo.mjs",
+    "db:demo:reset": "node supabase/scripts/demo.mjs --reset",
+    "db:demo:test": "node --test supabase/scripts/demo.test.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
