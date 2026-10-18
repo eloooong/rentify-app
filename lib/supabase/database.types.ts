@@ -193,6 +193,89 @@ export type Database = {
           },
         ];
       };
+      checkout_attempts: {
+        Row: {
+          booking_id: string;
+          candidate_session_id: string | null;
+          checkout_url: string | null;
+          consented_at: string;
+          created_at: string;
+          creation_started_at: string | null;
+          deposit_amount: number;
+          id: string;
+          last_error_code: string | null;
+          lease_token: string | null;
+          lease_until: string | null;
+          next_check_at: string | null;
+          policy_version: string;
+          rental_amount: number;
+          renter_id: string;
+          session_id: string | null;
+          state: string;
+          total_amount: number | null;
+          updated_at: string;
+          checkout_payload: Json | null;
+        };
+        ComputedFields: "checkout_payload";
+        Insert: {
+          booking_id: string;
+          candidate_session_id?: string | null;
+          checkout_url?: string | null;
+          consented_at?: string;
+          created_at?: string;
+          creation_started_at?: string | null;
+          deposit_amount: number;
+          id?: string;
+          last_error_code?: string | null;
+          lease_token?: string | null;
+          lease_until?: string | null;
+          next_check_at?: string | null;
+          policy_version: string;
+          rental_amount: number;
+          renter_id: string;
+          session_id?: string | null;
+          state?: string;
+          total_amount?: never;
+          updated_at?: string;
+        };
+        Update: {
+          booking_id?: string;
+          candidate_session_id?: string | null;
+          checkout_url?: string | null;
+          consented_at?: string;
+          created_at?: string;
+          creation_started_at?: string | null;
+          deposit_amount?: number;
+          id?: string;
+          last_error_code?: string | null;
+          lease_token?: string | null;
+          lease_until?: string | null;
+          next_check_at?: string | null;
+          policy_version?: string;
+          rental_amount?: number;
+          renter_id?: string;
+          session_id?: string | null;
+          state?: string;
+          total_amount?: never;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "checkout_attempts_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: true;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "checkout_attempts_renter_id_fkey";
+            columns: ["renter_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       condition_reports: {
         Row: {
           booking_id: string;
@@ -459,10 +542,95 @@ export type Database = {
           },
         ];
       };
+      payment_events: {
+        Row: {
+          attempt_id: string | null;
+          body_hash: string;
+          event_id: string;
+          received_at: string;
+          session_id: string;
+          state: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          attempt_id?: string | null;
+          body_hash: string;
+          event_id: string;
+          received_at?: string;
+          session_id: string;
+          state: string;
+        };
+        Update: {
+          attempt_id?: string | null;
+          body_hash?: string;
+          event_id?: string;
+          received_at?: string;
+          session_id?: string;
+          state?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_attempt_id_fkey";
+            columns: ["attempt_id"];
+            isOneToOne: false;
+            referencedRelation: "checkout_attempts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      payment_receipts: {
+        Row: {
+          amount: number;
+          attempt_id: string;
+          created_at: string;
+          currency: string;
+          disposition: string;
+          id: string;
+          method: string;
+          paid_at: string;
+          payment_id: string;
+          reason: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          attempt_id: string;
+          created_at?: string;
+          currency: string;
+          disposition: string;
+          id?: string;
+          method: string;
+          paid_at: string;
+          payment_id: string;
+          reason: string;
+        };
+        Update: {
+          amount?: number;
+          attempt_id?: string;
+          created_at?: string;
+          currency?: string;
+          disposition?: string;
+          id?: string;
+          method?: string;
+          paid_at?: string;
+          payment_id?: string;
+          reason?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_receipts_attempt_id_fkey";
+            columns: ["attempt_id"];
+            isOneToOne: false;
+            referencedRelation: "checkout_attempts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       payments: {
         Row: {
           amount: number;
           booking_id: string;
+          checkout_receipt_id: string | null;
           created_at: string;
           currency: string;
           gateway: string | null;
@@ -476,6 +644,7 @@ export type Database = {
         Insert: {
           amount: number;
           booking_id: string;
+          checkout_receipt_id?: string | null;
           created_at?: string;
           currency?: string;
           gateway?: string | null;
@@ -488,6 +657,7 @@ export type Database = {
         Update: {
           amount?: number;
           booking_id?: string;
+          checkout_receipt_id?: string | null;
           created_at?: string;
           currency?: string;
           gateway?: string | null;
@@ -503,6 +673,13 @@ export type Database = {
             columns: ["booking_id"];
             isOneToOne: false;
             referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_checkout_receipt_id_fkey";
+            columns: ["checkout_receipt_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_receipts";
             referencedColumns: ["id"];
           },
         ];
@@ -760,12 +937,66 @@ export type Database = {
         Args: { object_name: string };
         Returns: boolean;
       };
+      checkout_can_pay: { Args: { p_booking: string }; Returns: boolean };
+      checkout_payload: {
+        Args: {
+          a: Omit<
+            Database["public"]["Tables"]["checkout_attempts"]["Row"],
+            Database["public"]["Tables"]["checkout_attempts"]["ComputedFields"]
+          >;
+        };
+        Returns: Json;
+      };
+      claim_payment_work: {
+        Args: { p_attempt?: string; p_limit?: number };
+        Returns: {
+          booking_id: string;
+          candidate_session_id: string | null;
+          checkout_url: string | null;
+          consented_at: string;
+          created_at: string;
+          creation_started_at: string | null;
+          deposit_amount: number;
+          id: string;
+          last_error_code: string | null;
+          lease_token: string | null;
+          lease_until: string | null;
+          next_check_at: string | null;
+          policy_version: string;
+          rental_amount: number;
+          renter_id: string;
+          session_id: string | null;
+          state: string;
+          total_amount: number | null;
+          updated_at: string;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "checkout_attempts";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
+      enqueue_payment_event: {
+        Args: {
+          p_event: string;
+          p_hash: string;
+          p_reference: string;
+          p_session: string;
+        };
+        Returns: boolean;
+      };
       expire_booking_holds: { Args: { p_limit?: number }; Returns: number };
       expire_listing_booking_holds: {
         Args: { at_time: string; listing: string };
         Returns: number;
       };
+      fail_payment_work: {
+        Args: { p_attempt: string; p_code: string; p_lease: string };
+        Returns: undefined;
+      };
       get_booking: { Args: { p_booking: string }; Returns: Json };
+      get_checkout: { Args: { p_booking: string }; Returns: Json };
       is_public_listing: { Args: { listing: string }; Returns: boolean };
       list_my_bookings: {
         Args: {
@@ -774,6 +1005,10 @@ export type Database = {
           p_role?: string;
           p_status?: Database["public"]["Enums"]["booking_status"];
         };
+        Returns: Json;
+      };
+      prepare_checkout: {
+        Args: { p_booking: string; p_policy: string };
         Returns: Json;
       };
       request_booking: {
@@ -788,6 +1023,14 @@ export type Database = {
       save_my_profile: {
         Args: { p_display_name: string; p_phone?: string };
         Returns: undefined;
+      };
+      start_checkout_creation: {
+        Args: { p_attempt: string; p_lease: string };
+        Returns: undefined;
+      };
+      sync_checkout: {
+        Args: { p_attempt: string; p_lease: string; p_snapshot: Json };
+        Returns: string;
       };
       valid_catalog_attributes: {
         Args: { attrs: Json; category: string };
