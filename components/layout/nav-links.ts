@@ -9,6 +9,10 @@ export const primaryLinks: NavItem[] = [
 // Shown when signed out / signed in. Both routes are Person B's auth pages (B1.1).
 export const signInLink: NavItem = { href: "/login", label: "Sign in" };
 export const accountLink: NavItem = { href: "/account", label: "Account" };
+export const myListingsLink: NavItem = {
+  href: "/owner/listings",
+  label: "My listings",
+};
 
 export const lendLink: NavItem = { href: "/owner/listings/new", label: "Lend" };
 
