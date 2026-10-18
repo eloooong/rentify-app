@@ -1,4 +1,3 @@
-import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getAppOrigin } from "@/lib/auth/config";
@@ -9,6 +8,7 @@ import { paymongoProvider } from "./provider";
 import { runPaymentWork } from "./work";
 import { signedEvent } from "./webhook";
 import { checkoutInput, checkoutStatus } from "./validation";
+import { workerAuthorized } from "./worker-auth";
 
 function provider() {
   const secret = process.env.PAYMONGO_SECRET_KEY;
@@ -163,18 +163,7 @@ export async function webhook(request: NextRequest) {
   }
 }
 export async function reconcile(request: NextRequest) {
-  const secret = process.env.PAYMENTS_WORKER_SECRET;
-  const auth = request.headers.get("authorization") ?? "";
-  // Fixed-size hashes avoid timing differences and unbounded secret comparison.
-  if (
-    !secret ||
-    secret.length < 32 ||
-    auth.length > 1024 ||
-    !timingSafeEqual(
-      createHash("sha256").update(auth).digest(),
-      createHash("sha256").update(`Bearer ${secret}`).digest(),
-    )
-  )
+  if (!workerAuthorized(request))
     return privateResponse(
       {
         error: {

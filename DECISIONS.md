@@ -1,6 +1,6 @@
 # Rentify product decisions
 
-**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 are merged. B2.3 backend implementation is in review with external verification pending; B2.4 remains unimplemented. Choices are not completed behavior. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
+**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 and B2.3 backend are merged. B2.4 is implemented on `codex/cancellation-refunds`, pending review/merge; actual checkout/refund provider verification remains pending. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
 
 ## 1. First release
 
@@ -79,7 +79,7 @@ Participants may read their own bookings. Public availability exposes unavailabl
 | `requested`, `accepted`           | `expired`     | Trusted server; applicable deadline reached                                                                               |
 | `accepted`                        | `cancelled`   | Renter or owner before payment; record actor and reason                                                                   |
 | `accepted`                        | `paid`        | Trusted payment confirmation within the agreed payment flow; demo simulation is server-only and unavailable in production |
-| `paid`                            | `cancelled`   | Later B2.4 command under section 7's pre-pickup/pre-handover rule, with reason and durable refund obligation              |
+| `paid`                            | `cancelled`   | B2.4 command under section 7's pre-pickup/pre-handover rule, with reason and durable refund obligation                    |
 | `paid`                            | `handed_over` | Server after both parties confirm handover and the required checklist in the later checklist feature                      |
 | `handed_over`                     | `returned`    | Server after both parties confirm physical return; this does not approve condition or release money                       |
 | `returned`                        | `completed`   | Both parties approve the return inspection and the later settlement workflow is satisfied                                 |
@@ -136,8 +136,8 @@ Verify the raw-body signature before processing; require the test signature and 
 
 - **Selected:** gateway/method, immediate test charge, existing deposit snapshot, fee treatment, pre-pickup full refund, late-payment handling and no automatic deductions/releases.
 - **Not configured:** no PayMongo setting was found in standard local environment files. Account ownership, test keys, enabled GCash, HTTPS webhook delivery and actual refund behavior remain unverified. Never paste secrets into chat or commits.
-- **Implementation:** B2.3's [payment contract](lib/payments/README.md) and backend are implemented on `codex/payment-backend`, pending review/merge and provider checks. Person B confirmed there is no PayMongo account yet. B2.4/refund execution remains separate. Deterministic tests do not complete external verification.
-- **A wait:** real checkout waits for B's published API contract and merged backend. A2.1/A2.2 may use merged B2.2 APIs now. A retains listing/chat/frontend ownership.
+- **Implementation:** B2.3's [payment contract](lib/payments/README.md) and backend merged in [PR #36](https://github.com/eloooong/rentify-app/pull/36), both CI workflows passed. B2.4's [paid cancellation/refund backend](lib/payments/REFUNDS.md) is implemented on `codex/cancellation-refunds`, pending review/merge. Person B has no PayMongo account yet. Both checkout and separate refund execution opt-in remain disabled; deterministic tests do not complete external verification.
+- **A wait:** A may integrate merged B2.2 bookings and B2.3 checkout contracts. Actual hosted checkout waits for test configuration/verification. B2.4 refund controls wait for its merge/handoff; actual refund execution also needs verified account support. A retains frontend ownership.
 - **Still pending before live use:** marketplace/custody approval, payout arrangements, dispute authority/evidence/appeals, retention/privacy and deployment readiness. Demo defaults do not settle live policies.
 
 ## 8. Implementation handoff and acceptance examples
@@ -148,4 +148,4 @@ Required booking regression checks include: one-day and three-day totals; reject
 
 B2.3/B2.4 checks must cover exact totals, concurrent checkout retries, invalid signatures/live events, duplicate/out-of-order/missed events, cancellation/payment races, late-payment refunds, full/partial refund retries, failed refunds and outsider denial. Verify actual GCash test checkout, signed delivery, session expiry and refunds before claiming the external integration works. Publish exact API/ledger/error contracts before A connects checkout.
 
-**Decision record:** sections 1–6 approved directly by Person B (Angel); section 7 selected under Person B's explicit delegation on 18 October 2026. Person A's separate approval is not recorded. B2.1/B2.2 are merged; B2.3 backend is implemented in its review branch with external checks pending; B2.4/refunds remain unimplemented. Controls stay gated by dependencies and verification. Section 7 supersedes older policy-pending notes; the [booking](lib/bookings/README.md) and [payment](lib/payments/README.md) contracts distinguish implemented behavior from external verification. Reviewed policy changes must preserve existing booking snapshots.
+**Decision record:** sections 1–6 approved directly by Person B (Angel); section 7 selected under Person B's explicit delegation on 18 October 2026. Person A's separate approval is not recorded. B2.1/B2.2 and B2.3 backend are merged; B2.4 is implemented in its task branch with review/merge and external checks pending. Controls stay gated by dependencies and verification. Section 7 supersedes older policy-pending notes; the [booking](lib/bookings/README.md), [payment](lib/payments/README.md) and [refund](lib/payments/REFUNDS.md) contracts distinguish implemented behavior from external verification. Reviewed policy changes must preserve existing booking snapshots.
