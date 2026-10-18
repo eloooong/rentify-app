@@ -19,6 +19,7 @@
     "db:reset": "supabase db reset --local --no-seed",
     "db:lint": "supabase db lint --local --schema public --fail-on warning",
     "db:test": "supabase test db --local",
+    "db:test:bookings": "node --test supabase/scripts/booking-access.test.mjs && node supabase/scripts/booking-concurrency.mjs",
     "db:env": "node supabase/scripts/env.mjs",
     "db:types": "node supabase/scripts/types.mjs",
     "db:smoke": "node supabase/scripts/smoke.mjs",

@@ -9,6 +9,7 @@ on:
       - lib/auth/**
       - lib/profiles/**
       - lib/catalog/**
+      - lib/bookings/**
       - app/api/catalog/**
       - tests/e2e/catalog.py
       - app/(auth)/**
@@ -32,6 +33,7 @@ on:
       - lib/auth/**
       - lib/profiles/**
       - lib/catalog/**
+      - lib/bookings/**
       - app/api/catalog/**
       - tests/e2e/catalog.py
       - app/(auth)/**
@@ -83,6 +85,8 @@ jobs:
         run: npm run db:lint
       - name: Test constraints and access boundaries
         run: npm run db:test
+      - name: Test booking participant access and concurrent reservations
+        run: npm run db:test:bookings
       - name: Test local demo seed, preservation, privacy, and scoped reset
         run: npm run db:demo:test
       - name: Test real HTTP access and Server Component client

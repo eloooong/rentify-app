@@ -61,6 +61,7 @@ export type Database = {
           listing_id: string;
           owner_id: string;
           rental_amount: number;
+          rental_days: number;
           rental_period: unknown;
           renter_id: string;
           status: Database["public"]["Enums"]["booking_status"];
@@ -76,6 +77,7 @@ export type Database = {
           listing_id: string;
           owner_id: string;
           rental_amount: number;
+          rental_days?: never;
           rental_period: unknown;
           renter_id: string;
           status?: Database["public"]["Enums"]["booking_status"];
@@ -90,6 +92,7 @@ export type Database = {
           listing_id?: string;
           owner_id?: string;
           rental_amount?: number;
+          rental_days?: never;
           rental_period?: unknown;
           renter_id?: string;
           status?: Database["public"]["Enums"]["booking_status"];
