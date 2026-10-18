@@ -1,6 +1,6 @@
 # B1.1 auth contract and verification
 
-This branch implements email/password auth with server actions, Supabase SSR, and Next.js 16's `proxy.ts`. It does not create profile rows, change the schema, or grant listing/storage permissions. B1.2/B1.3 remain separate handoffs.
+Email/password auth uses server actions, Supabase SSR, and Next.js 16's `proxy.ts`. B1.2 adds [profile completion and permissions](../profiles/README.md) on the account page; signup alone still creates no profile row. Listing/storage permissions remain a B1.3 handoff.
 
 | Route                  | Contract                                                                                        |
 | ---------------------- | ----------------------------------------------------------------------------------------------- |
@@ -9,7 +9,7 @@ This branch implements email/password auth with server actions, Supabase SSR, an
 | `/verify-email`        | Resend signup verification with a generic account-status response.                              |
 | `/forgot-password`     | Request recovery with a generic account-status response.                                        |
 | `/update-password`     | Verified session required; matching new passwords, followed by global refresh-session sign-out. |
-| `/account`             | Verified email, password-change link, and sign-out. No profile table reads.                     |
+| `/account`             | Verified email, B1.2 profile form, password-change link, and sign-out.                          |
 | `/auth/confirm`        | One-time `token_hash`, restricted to `email` or `recovery`.                                     |
 | `/auth/callback`       | PKCE `code` exchange and safe local return path.                                                |
 | `/auth/error`          | Expired/replayed/invalid link recovery choices.                                                 |
@@ -47,7 +47,7 @@ Hosted projects must separately configure the canonical HTTPS Site URL, allowlis
 
 ## Checks
 
-Unit tests cover input/redirect validation, generic provider failures, verified identity, outages, forged cookies, cookie forwarding/write failures, cache headers, OTP/PKCE errors, and premature admin access. Existing SQL policies/types remain unchanged.
+Unit tests cover input/redirect validation, generic provider failures, verified identity, outages, forged cookies, cookie forwarding/write failures, cache headers, OTP/PKCE errors, and premature admin access. B1.2 adds profile actions, validation, SQL permissions, and browser checks; see its contract for the public/private projection.
 
 The real browser journey creates two random local `@example.test` users and removes only those Auth fixtures. It tests signup, denied unverified login, email confirmation/replay, real refresh-token rotation, two-user isolation, 375px layout, forged cookie/admin denial, recovery in another browser, mismatch/old/new password behavior, and logout. Its local admin key stays only in the Python process for cleanup, never logs/files/browser code. Mailpit retains fixture emails after their accounts are removed. Non-local app/API/inbox hosts are rejected.
 
@@ -55,6 +55,6 @@ The real browser journey creates two random local `@example.test` users and remo
 C:/Users/angel/.codex/tools/webapp-testing/Scripts/python.exe tests/e2e/auth.py --browser-channel msedge
 ```
 
-Other machines: create an isolated Python environment, install `playwright==1.64.0` and its Chromium browser, then run `python tests/e2e/auth.py` against the running local app/stack. Database CI runs this same journey against a production build and disposable Supabase/Mailpit, alongside 63 SQL checks and type drift verification.
+Other machines: create an isolated Python environment, install `playwright==1.64.0` and its Chromium browser, then run `python tests/e2e/auth.py` against the running local app/stack. Database CI runs this same journey against a production build and disposable Supabase/Mailpit, alongside SQL access checks and type drift verification.
 
 References: [SSR clients](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [local email templates](https://supabase.com/docs/guides/local-development/customizing-email-templates).

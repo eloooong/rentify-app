@@ -16,12 +16,13 @@ import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
-from playwright.sync_api import sync_playwright, expect
+from playwright.sync_api import sync_playwright, expect, TimeoutError as PlaywrightTimeoutError
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--base-url", default="http://localhost:3000")
 parser.add_argument("--mail-url", default="http://127.0.0.1:54324")
 parser.add_argument("--browser-channel", default=None)
+parser.add_argument("--screenshots", action="store_true", help="Save local profile review screenshots under ignored tmp/")
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[2]
 for url in (args.base_url, args.mail_url):
@@ -84,6 +85,12 @@ def sign_in(page, email, secret):
     page.get_by_label("Email address", exact=True).fill(email)
     page.get_by_label("Password", exact=True).fill(secret)
     page.get_by_role("button", name="Sign in", exact=True).click()
+
+def profile_api(context, path, method="GET", data=None):
+    # Public key + this user's access token only; no admin credential in requests.
+    token = session_cookies(context)[1]["access_token"]
+    return context.request.fetch(api_url + "/rest/v1/" + path, method=method, data=data,
+        headers={"apikey": status.get("ANON_KEY") or status["PUBLISHABLE_KEY"], "Authorization": "Bearer " + token, "Prefer": "return=representation"})
 
 def register(page, email):
     global phase
@@ -156,6 +163,60 @@ def run():
         assert second_page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         expect(page.get_by_text(email_two, exact=True)).not_to_be_visible()
         assert one.request.get(args.base_url + "/admin", max_redirects=0).status == 403
+
+        phase = "profile creation and persistence"
+        page.get_by_label("Display name", exact=True).fill("  First member  ")
+        page.get_by_label("Phone number (optional)", exact=True).fill("+639171234567")
+        page.get_by_role("button", name="Save profile", exact=True).click()
+        expect(page.get_by_role("status").filter(has_text="Profile saved")).to_be_visible()
+        page.reload()
+        expect(page.get_by_label("Display name", exact=True)).to_have_value("First member")
+        expect(page.get_by_label("Phone number (optional)", exact=True)).to_have_value("+639171234567")
+        owner_id = session_cookies(one)[1]["user"]["id"]
+        public_headers = {"apikey": status.get("ANON_KEY") or status["PUBLISHABLE_KEY"]}
+        public = guest.request.get(api_url + "/rest/v1/profiles?select=id,display_name,avatar_path&id=eq." + owner_id, headers=public_headers)
+        assert public.status == 200 and public.json()[0]["display_name"] == "First member"
+        assert "phone" not in public.text() and email_one not in public.text()
+        assert guest.request.get(api_url + "/rest/v1/profiles?select=role", headers=public_headers).status in (401, 403)
+        assert guest.request.get(api_url + "/rest/v1/profile_private?select=phone", headers=public_headers).status in (401, 403)
+
+        phase = "profile owner permissions and protected fields"
+        assert profile_api(one, "profiles?select=id,display_name&id=eq." + owner_id, "PATCH", {"role": "admin"}).status == 403
+        assert profile_api(one, "profile_private?select=user_id&user_id=eq." + owner_id, "PATCH", {"phone_verified_at": "2026-10-18T00:00:00Z"}).status == 403
+        other_read = profile_api(two, "profile_private?select=phone&user_id=eq." + owner_id)
+        assert other_read.status == 200 and other_read.json() == []
+        other_write = profile_api(two, "profiles?select=id,display_name&id=eq." + owner_id, "PATCH", {"display_name": "Intruder"})
+        assert other_write.status == 200 and other_write.json() == []
+        second_page.get_by_label("Display name", exact=True).fill("Second member")
+        second_page.get_by_role("button", name="Save profile", exact=True).click()
+        expect(second_page.get_by_role("status").filter(has_text="Profile saved")).to_be_visible()
+        expect(second_page.get_by_label("Phone number (optional)", exact=True)).to_have_value("")
+
+        phase = "profile editing and optional phone removal"
+        page.get_by_label("Display name", exact=True).fill("Updated member")
+        page.get_by_label("Phone number (optional)", exact=True).fill("invalid")
+        page.get_by_role("button", name="Save profile", exact=True).click()
+        expect(page.locator("#phone-error")).to_contain_text("international number")
+        page.get_by_label("Phone number (optional)", exact=True).fill("")
+        page.get_by_role("button", name="Save profile", exact=True).click()
+        expect(page.get_by_role("status").filter(has_text="Profile saved")).to_be_visible()
+        page.reload()
+        expect(page.get_by_label("Display name", exact=True)).to_have_value("Updated member")
+        expect(page.get_by_label("Phone number (optional)", exact=True)).to_have_value("")
+        assert second_page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        if args.screenshots:
+            phase = "profile review screenshots"
+            for review_page in (page, second_page):
+                try:
+                    review_page.wait_for_load_state("networkidle", timeout=5000)
+                except PlaywrightTimeoutError:
+                    # The shared shell may keep background prefetches active.
+                    expect(review_page.get_by_role("form", name="Your profile")).to_be_visible()
+            output = root / "tmp" / "profile-ui-review"
+            output.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(output / "desktop.png"), full_page=True)
+            second_page.screenshot(path=str(output / "mobile.png"), full_page=True)
+        print("Profile create/edit/remove, public projection, private isolation, role/verification denial: PASS", flush=True)
 
         phase = "forged cookie rejection"
         cookies, session = session_cookies(one)
