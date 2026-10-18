@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "status": "DRAFT - approximate, not exported from Figma",
+    "status": "APPROVED for the MVP by Person A on 18 October 2026 (approximate values, not exported from Figma)",
     "source": "Pixel colors sampled from PNG screenshots of the 2023 desktop designs (home, All Items, listing detail, header states, two modals). Screenshots are compressed, so hex values can be off by a few units.",
     "verified": false,
     "notToTrust": [
@@ -8,10 +8,16 @@
       "No spacing, radius, type scale, shadow, or breakpoint values were measured.",
       "No mobile frames were seen, so mobile values are unknown."
     ],
-    "nextStep": "Replace with values from Figma variables or styles once access is available, then map into app/globals.css under @theme.",
+    "nextStep": "If Figma access becomes available, export the real variables and replace the values in app/globals.css.",
     "notes": [
       "A second, brighter orange (#FB7800) appears on the Confirm buttons in both modals. It is not a token for now. Revisit when the Figma values are available."
-    ]
+    ],
+    "approval": {
+      "by": "Person A",
+      "date": "2026-10-18",
+      "scope": "The sampled colors (brand primary #E55910), brand-strong #C2410C for small orange text and buttons, and the system font stack, as mapped in app/globals.css.",
+      "replaceWhen": "Real Figma values become available; only app/globals.css needs to change."
+    }
   },
   "color": {
     "brand": {
@@ -23,25 +29,47 @@
       }
     },
     "surface": {
-      "page": { "value": "#FFFFFF", "source": "Page and modal background" },
-      "muted": { "value": "#EFEFEF", "source": "Footer background" },
+      "page": {
+        "value": "#FFFFFF",
+        "source": "Page and modal background"
+      },
+      "muted": {
+        "value": "#EFEFEF",
+        "source": "Footer background"
+      },
       "tint": {
         "value": "#EFEFFD",
         "source": "Cancel button background (lavender)"
       }
     },
     "text": {
-      "default": { "value": "#000000", "source": "Headings and prices" },
-      "body": { "value": "#484866", "source": "Modal body text" },
-      "muted": { "value": "#787890", "source": "Secondary text, approximate" }
+      "default": {
+        "value": "#000000",
+        "source": "Headings and prices"
+      },
+      "body": {
+        "value": "#484866",
+        "source": "Modal body text"
+      },
+      "muted": {
+        "value": "#787890",
+        "source": "Secondary text, approximate"
+      }
     },
     "border": {
-      "divider": { "value": "#EAEAEA", "source": "Modal dividers" }
+      "divider": {
+        "value": "#EAEAEA",
+        "source": "Modal dividers"
+      }
     }
   },
   "font": {
     "family": {
-      "sans": { "value": "Poppins", "verified": false }
+      "sans": {
+        "value": "system font stack (ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica Neue, Arial)",
+        "approved": true,
+        "note": "The design looks like Poppins, but that was never confirmed. Switch the stack in app/globals.css if it is."
+      }
     }
   },
   "radius": {},
@@ -70,13 +98,17 @@
         "ratio": 3.17,
         "aa": "fails for normal text"
       },
-      { "pair": "#484866 text on white", "ratio": 8.77, "aa": "passes" },
+      {
+        "pair": "#484866 text on white",
+        "ratio": 8.77,
+        "aa": "passes"
+      },
       {
         "pair": "#787890 text on white",
         "ratio": 4.3,
         "aa": "fails by a small margin"
       }
     ],
-    "suggestion": "A darker orange such as #C2410C (5.18:1 with white, both directions) would pass AA. This is a proposal that needs the designer's approval, not an extracted value."
+    "suggestion": "Adopted: #C2410C (brand-strong, 5.18:1 with white, both directions) is used for small orange text and buttons with small white text. Approved by Person A on 18 October 2026."
   }
 }
