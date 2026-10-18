@@ -4,7 +4,7 @@
 
 Keep this file open while working. It is the shared progress checklist, updated by the person finishing each task. It does not update automatically.
 
-**Latest check: 18 October 2026 (Asia/Manila).** Local backend verification ([PR #11](https://github.com/eloooong/rentify-app/pull/11)), A's shell verification status (#12), next-task summary (#13), and shadcn/ui (#14) are merged. B1.1 authentication has not started.
+**Latest check: 18 October 2026 (Asia/Manila).** Local backend verification ([PR #11](https://github.com/eloooong/rentify-app/pull/11)), A's shell verification status (#12), next-task summary (#13), and shadcn/ui (#14) are merged. B1.1 authentication is ready for review in [PR #19](https://github.com/eloooong/rentify-app/pull/19): 51 unit tests, 63 SQL checks, real browser auth journeys, production build, and both CI jobs passed. Person A's review and merge remain pending.
 
 **Newly merged:**
 
@@ -15,7 +15,7 @@ Both people should pull updated `main` and run `npm ci` before the next coding t
 
 ## Next session — who works and who waits
 
-- [ ] **Person B — next: B1.1 authentication.** Start a new branch from updated `main`; implement signup/email verification, login/logout, password reset, session refresh, and protected routes. Publish the auth handoff and tests before A connects session-dependent UI. This is the next task, not work already in progress.
+- [ ] **Person B — review wait: B1.1 authentication.** [PR #19](https://github.com/eloooong/rentify-app/pull/19), branch `feat/auth-foundation`, implements signup/email verification, login/logout, recovery, refresh, and protected routes. Local checks and CI passed; Person A reviews before merge. [Auth handoff](lib/auth/README.md). Keep this unchecked until merge. B1.2 profiles is B's next implementation task after this merges.
 - [ ] **Person A — next:** continue A0.3 README/architecture docs or build listing screens with the merged UI components and clearly labeled mocks. Real Figma values/mobile frames remain a separate design follow-up.
 - **WAIT for A:** real authentication waits for B1.1; real profiles, listings, and uploads wait for B1.2/B1.3. Neither person needs to wait for the other to begin the separate tasks above. Only one person edits this checklist or shared configuration at a time.
 
@@ -30,7 +30,7 @@ Both people should pull updated `main` and run `npm ci` before the next coding t
 | Supabase local runtime and application clients                   | B0.4 complete; [PR #9](https://github.com/eloooong/rentify-app/pull/9) merged. Windows setup, reset, 63 SQL checks, real API/Server Component queries, and type verification passed on 18 October 2026                                                                                        |
 | Person A status                                                  | Pointer (#5), draft tokens (#6), draft FAQ/legal text (#7), draft theme/app shell (#10), shell verification (#12), shadcn/UI kit (#14), shadcn devDependency fix (#16), and README/architecture docs (#17) merged. Figma values, `brand-strong` approval and mobile designs remain incomplete |
 | Person A can do now                                              | Build A3.4 help pages from the merged drafts and A1.3/A1.4 listing screens with the merged UI components and typed mocks                                                                                                                                                                      |
-| Person B can do now                                              | Start B1.1 authentication from updated main on a new task branch; keep profile/listing permissions as explicit later handoffs                                                                                                                                                                 |
+| Person B can do now                                              | Test B1.1 locally and address Person A's review of PR #19; keep package/configuration edits coordinated until merge, then start B1.2 profiles                                                                                                                                                 |
 | Next coding handoff                                              | A can continue presentation work with mocks; real listing access waits for B1.2/B1.3 permissions/storage                                                                                                                                                                                      |
 
 Check off a task after its acceptance checks pass and its PR is merged. Preparatory work can happen while a dependency is pending; do not mark a feature done just because it works against a mock.
@@ -61,7 +61,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 **Person B — you**
 
-- [ ] **B1.1** Authentication: signup, email verification, login/logout, password reset, and protected routes.
+- [ ] **B1.1** Authentication: signup, email verification, login/logout, password reset, and protected routes. _Implemented in [PR #19](https://github.com/eloooong/rentify-app/pull/19); 51 unit tests, 63 SQL checks, real browser auth journeys, production build, and CI passed. [Contract and test instructions](lib/auth/README.md). Wait for Person A's review and merge before integration; hosted email/redirect configuration remains a deployment task._
 - [ ] **B1.2** Profiles: profile creation/editing, public versus private fields, protected admin role, and access-policy tests.
 - [ ] **B1.3** Categories, listings, photo records, storage policies, and category templates. Publish this handoff early.
 - [ ] **B1.4** Demo users/listings, reproducible seed/reset commands, and regenerated database types.

@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <body>
+    <h1>Verify your Rentify email</h1>
+    <p>Confirm your email to finish creating your Rentify account.</p>
+    <p>
+      <a
+        href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email"
+        >Verify email</a
+      >
+    </p>
+    <p>If you did not create an account, you can ignore this email.</p>
+  </body>
+</html>

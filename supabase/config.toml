@@ -41,10 +41,28 @@ enabled = true
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://127.0.0.1:3000"]
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3000/auth/callback?next=/update-password",
+  "http://127.0.0.1:3000/auth/callback",
+  "http://127.0.0.1:3000/auth/callback?next=/update-password"
+]
+minimum_password_length = 8
+
+[auth.rate_limit]
+# Local email stays in Mailpit. Hosted projects need their own SMTP/rate limits.
+email_sent = 30
 
 [auth.email]
 enable_confirmations = true
+
+[auth.email.template.confirmation]
+subject = "Verify your Rentify email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Reset your Rentify password"
+content_path = "./supabase/templates/recovery.html"
 
 [analytics]
 enabled = false
