@@ -53,7 +53,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 - [x] **A0.3** Expand the starter README and architecture documentation using the actual project. README rewrite and `docs/architecture.md` merged in [PR #17](https://github.com/eloooong/rentify-app/pull/17); links, script names and the Mermaid diagram were checked. The README's production-audit note relies on [PR #16](https://github.com/eloooong/rentify-app/pull/16) (shadcn moved to devDependencies), also merged.
 - [x] **A0.4** `CLAUDE.md` pointer to `AGENTS.md` merged in [PR #5](https://github.com/eloooong/rentify-app/pull/5).
 
-**Together:** record decisions in `DECISIONS.md`: course demo or live pilot, currency, date boundaries, deposits, cancellation/refunds, verification, gateway, and minimum dispute handling. Label unresolved decisions as pending.
+**Together:** review the proposed [booking rules in `DECISIONS.md`](DECISIONS.md): demo-first scope, PHP/Manila dates, inclusive rental days, request/payment expiry, reservation statuses, price snapshots and participant permissions. These are proposals, not agreed or implemented rules. Confirm the booking sections before B2.1/B2.2; gateway, deposit/refund/dispute and live-pilot decisions remain explicitly pending.
 
 **WAIT:** Foundation B0.1–B0.4 and B1.1–B1.4 are merged. Both start separate branches from updated `main`. A can connect real auth, profiles, listings and uploads, and run the merged local demo commands on A's machine. Read the [current Supabase contract](supabase/README.md). Coordinate shared files and keep at most one migration PR open.
 
@@ -79,8 +79,8 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 **Person B — you**
 
-- [ ] **B2.1** Booking schema, self-booking prevention, and database overlap protection tested with concurrent requests.
-- [ ] **B2.2** State transitions, permissions, server-side prices, availability endpoint, booking actions, expiry job, and tests.
+- [ ] **B2.1** Booking schema, self-booking prevention, and database overlap protection tested with concurrent requests. _Proposed reservation/date rules and acceptance examples are in [DECISIONS.md](DECISIONS.md); confirm them before implementation. No booking migration or API added by the policy draft._
+- [ ] **B2.2** State transitions, permissions, server-side prices, availability endpoint, booking actions, expiry job, and tests. _Use the proposed expiry, price-snapshot and access rules only after agreement; payment/checklist/settlement transitions stay gated by their implementation dependencies._
 - [ ] **B2.3** Gateway test-mode adapter, checkout endpoint, signed/idempotent webhooks, and payment records.
 - [ ] **B2.4** Cancellation and refund rules from `DECISIONS.md`, with tests for each case.
 
