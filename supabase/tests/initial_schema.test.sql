@@ -68,7 +68,7 @@ grant select, insert, update, delete on public.profiles, public.profile_private,
   public.categories, public.listings, public.bookings, public.payments, public.messages
   to anon, authenticated;
 set local role anon;
-select is((select count(*) from public.profiles), 0::bigint, 'RLS hides populated profiles from anonymous users');
+select is((select count(*) from public.profiles where id in ('10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000003')), 3::bigint, 'B1.2 permits active public profiles; production column grants restrict their fields');
 select is((select count(*) from public.listings), 0::bigint, 'RLS hides listings before read policies exist');
 select is((select count(*) from public.profile_private), 0::bigint, 'RLS hides private phone data');
 set local role authenticated;
@@ -87,10 +87,10 @@ select lives_ok(
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 select is((select count(*) from public.profile_private), 0::bigint, 'Unrelated user cannot read private data');
 reset role;
-select is((select role from public.profiles where display_name = 'Owner'), 'user', 'Role escalation changed nothing');
+select is((select role from public.profiles where id = '10000000-0000-4000-8000-000000000001'), 'user', 'Role escalation changed nothing');
 
 set local role service_role;
-select is((select count(*) from public.profiles), 3::bigint, 'Trusted backend can read fixture profiles');
+select is((select count(*) from public.profiles where id in ('10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000003')), 3::bigint, 'Trusted backend can read fixture profiles');
 select throws_ok('delete from public.audit_log', '42501', null::text, 'Trusted backend cannot erase the audit trail');
 select throws_ok($$update public.audit_log set action = 'rewritten'$$, '42501', null::text, 'Trusted backend cannot rewrite the audit trail');
 reset role;
