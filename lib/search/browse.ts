@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { CatalogListing, CatalogPage } from "@/lib/catalog/types";
 import type { Database } from "@/lib/supabase/database.types";
 import { getSupabaseEnvironment } from "@/lib/supabase/env";
@@ -34,20 +34,49 @@ export async function getCategories(): Promise<CategoryOption[]> {
   return data ?? [];
 }
 
-export async function searchListings(query: BrowseQuery): Promise<CatalogPage> {
-  const client = publicClient();
-  let request = client
-    .from("listings")
-    .select("*", { count: "exact" })
+type Client = SupabaseClient<Database>;
+
+/**
+ * PostgREST answers HTTP 416 with this code when the requested page starts
+ * beyond the last matching row (for example ?page=99 with four listings),
+ * instead of returning an empty list.
+ */
+export const RANGE_NOT_SATISFIABLE = "PGRST103";
+
+/** The subset of the query builder that the browse filters use. */
+interface Filterable<Self> {
+  eq(column: string, value: string): Self;
+  ilike(column: string, pattern: string): Self;
+  gte(column: string, value: number): Self;
+  lte(column: string, value: number): Self;
+}
+
+/** Filters shared by the page query and the count-only fallback. */
+function applyFilters<Q extends Filterable<Q>>(request: Q, query: BrowseQuery) {
+  let filtered = request
     .eq("status", "published")
     .eq("currency", query.currency);
   if (query.q)
-    request = request.ilike("title", `%${query.q.replace(/[\\%_]/g, "\\$&")}%`);
-  if (query.categoryId) request = request.eq("category_id", query.categoryId);
+    filtered = filtered.ilike(
+      "title",
+      `%${query.q.replace(/[\\%_]/g, "\\$&")}%`,
+    );
+  if (query.categoryId) filtered = filtered.eq("category_id", query.categoryId);
   if (query.minPrice !== undefined)
-    request = request.gte("daily_price_amount", query.minPrice);
+    filtered = filtered.gte("daily_price_amount", query.minPrice);
   if (query.maxPrice !== undefined)
-    request = request.lte("daily_price_amount", query.maxPrice);
+    filtered = filtered.lte("daily_price_amount", query.maxPrice);
+  return filtered;
+}
+
+export async function searchListings(
+  query: BrowseQuery,
+  client: Client = publicClient(),
+): Promise<CatalogPage> {
+  let request = applyFilters(
+    client.from("listings").select("*", { count: "exact" }),
+    query,
+  );
   request =
     query.sort === "newest"
       ? request.order("created_at", { ascending: false })
@@ -58,6 +87,24 @@ export async function searchListings(query: BrowseQuery): Promise<CatalogPage> {
   const { data, error, count } = await request
     .order("id")
     .range((query.page - 1) * query.pageSize, query.page * query.pageSize - 1);
+
+  if (error?.code === RANGE_NOT_SATISFIABLE) {
+    // Past the last result: report the real total so the page can show its
+    // "past the last result" state instead of a load failure.
+    const total = await applyFilters(
+      client.from("listings").select("id", { count: "exact", head: true }),
+      query,
+    );
+    if (total.error) throw new Error("Unable to load listings.");
+    return {
+      data: [],
+      pagination: {
+        page: query.page,
+        pageSize: query.pageSize,
+        total: total.count ?? 0,
+      },
+    };
+  }
   if (error) throw new Error("Unable to load listings.");
 
   const listings = data ?? [];
