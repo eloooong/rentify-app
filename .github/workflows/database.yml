@@ -11,6 +11,7 @@ on:
       - lib/catalog/**
       - lib/bookings/**
       - app/api/catalog/**
+      - app/api/bookings/**
       - tests/e2e/catalog.py
       - app/(auth)/**
       - app/layout.tsx
@@ -35,6 +36,7 @@ on:
       - lib/catalog/**
       - lib/bookings/**
       - app/api/catalog/**
+      - app/api/bookings/**
       - tests/e2e/catalog.py
       - app/(auth)/**
       - app/layout.tsx
@@ -120,6 +122,8 @@ jobs:
           exit 1
       - name: Test real signup, verification, refresh, recovery, and permissions
         run: /tmp/rentify-auth-python/bin/python tests/e2e/auth.py
+      - name: Test real booking HTTP routes with Auth session cookies
+        run: npm run test:bookings:http
       - name: Stop auth journey app
         if: always()
         run: |

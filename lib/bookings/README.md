@@ -1,72 +1,120 @@
-# Booking database contract — B2.1
+# Booking API contract — B2.2
 
-Person B owns this contract, migrations and generated types. The demo rules in [DECISIONS.md](../../DECISIONS.md), sections 1–6, were approved by Person B on 18 October 2026. Payment/gateway/refund/deposit settlement decisions remain pending.
+Person B owns booking commands, migrations and generated types. Person B approved the demo rules in [DECISIONS.md](../../DECISIONS.md), sections 1–6. Person A integrates after this handoff merges. Payment, handover, settlement and paid cancellation stay gated by later dependencies and section 7's pending decisions.
 
-## Implemented in this handoff
+## HTTP endpoints
 
-One listing represents one physical device. The existing `bookings` table retains its owner/listing foreign key, self-booking check, currency/amount constraints and status enum. The new migration adds:
+Use same-origin requests with existing Supabase session cookies. Private routes verify the email-confirmed identity; mutations require an active account and completed profile. Suspended participants retain history reads. Every response, including public availability/errors, uses `Cache-Control: private, no-store, max-age=0`.
 
-| Field / constraint                | Behavior                                                                                  |
-| --------------------------------- | ----------------------------------------------------------------------------------------- |
-| `rental_period`                   | PostgreSQL `daterange`; store `[pickup_date, return_date + 1 day)`                        |
-| `rental_days`                     | Generated, non-null integer; 1–30 inclusive rental days. Clients cannot supply or edit it |
-| `bookings_reserved_dates_excl`    | No overlapping ranges for one listing when both rows reserve dates                        |
-| `bookings_renter_open_dates_excl` | No overlapping open requests/reservations for the same renter and listing                 |
-| `bookings_participant_read`       | Authenticated owner/renter may read their own bookings only                               |
+| Method / path                    | Input                                                                                         | Success                                                                         |
+| -------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `POST /api/bookings`             | Strict JSON `{listing_id,pickup_date,return_date,request_key}`                                | `201 {data:Booking,replayed:false}`; identical retry `200` with `replayed:true` |
+| `GET /api/bookings`              | Optional `role=all\|owner\|renter`, `status`, `page` (1–10000), `pageSize` (1–50; default 20) | `{data:Booking[],pagination:{page,pageSize,total}}`                             |
+| `GET /api/bookings/:id`          | Booking UUID                                                                                  | `{data:Booking}` for participants; generic 404 for outsiders                    |
+| `POST /api/bookings/:id/actions` | `{action:"accept"}` or `{action:"decline"\|"cancel",reason:string}`                           | `{data:Booking}`                                                                |
+| `GET /api/bookings/availability` | Required `listingId` UUID, `from`, `to` ISO dates                                             | Public `{data:BookingAvailability}`                                             |
 
-**Reserving statuses:** `accepted`, `paid`, `handed_over`, `returned`, `disputed`.
+Dates use `YYYY-MM-DD`. Generate `request_key` with `crypto.randomUUID()` once per intended request; preserve it across network retries. Reusing it with another listing/dates returns 409. An identical retry returns the original quote with its current status, even after listing prices change. A fresh request needs a fresh key. Never submit prices, identities, status or extra fields.
 
-**Open statuses for duplicate-request protection:** the reserving statuses plus `requested`.
+Mutations require `Content-Type: application/json`, exact `Origin` matching `NEXT_PUBLIC_APP_URL`, and at most 32 KiB streamed body. Reasons are trimmed, 3–500 characters, without control characters. Unknown fields/query parameters return 400. A page beyond the last result returns an empty array with the correct total.
 
-`requested` does not reserve the device against other renters. `declined`, `expired`, `cancelled`, and `completed` do not reserve dates or prevent another request. An expired deadline alone does not release a row still marked `accepted`: B2.2 must explicitly change its status. No time-dependent predicate is used in the exclusion constraints.
+Runtime schemas and exported `Booking`, `BookingPage`, `BookingAvailability` types: [validation.ts](validation.ts). Generated RPC signatures: [database.types.ts](../supabase/database.types.ts).
 
-Example: pickup 20 November / return 22 November is `[2026-11-20,2026-11-23)` with `rental_days = 3`. Another reservation starting 22 November conflicts; one starting 23 November is adjacent and allowed by the range constraint. Existing reservations for another device do not conflict.
+## Booking DTO and quote
 
-## Access and integration gate for Person A
+Every `Booking` includes:
 
-Only `SELECT` is granted to ordinary authenticated clients. Anonymous users cannot read the table. RLS filters bookings by the verified session's user ID matching `owner_id` or `renter_id`; public listing visibility does not expose bookings. Participants retain read access to their history if a listing is paused or an account is suspended. No browser admin privilege or public availability surface is enabled.
+- UUIDs: `id`, `listing_id`, `owner_id`, `renter_id`; participant-only information.
+- Dates/duration: `pickup_date`, `return_date`, `rental_days` (1–30, both dates inclusive).
+- Money: `daily_price_amount`, `rental_amount`, `deposit_amount`, `total_amount`, `currency`.
+- State: `status`, `policy_version`, `request_expires_at`, `payment_expires_at`, `accepted_at`.
+- History/UI: `closed_by`, `status_reason`, `is_expired`, `allowed_actions`, `created_at`, `updated_at`.
 
-Use the existing typed request-scoped Supabase client to read a participant's bookings. Do not use a privileged key or expose unrestricted rows to the browser. `lib/supabase/database.types.ts` is generated from the migrated database; its insert/update shape rejects manually assigned `rental_days`.
+Amounts are integer minor units: `10000` means PHP 100.00. The server snapshots the listing daily price and displayed deposit: `rental_amount = daily_price_amount * rental_days`, `total_amount = rental_amount + deposit_amount`. This quote does not collect money or settle deposit custody. Clients cannot edit dates, participants or quotes. New commands use `policy_version="demo-booking-v1"`. Timestamps include an offset; nullable fields return `null`.
 
-**No ordinary client may insert, update or delete bookings. There is no booking mutation RPC or HTTP endpoint in B2.1.** The database concurrency tests use trusted isolated fixture writes; they are not an authorized client acceptance API. Person A can prepare clearly labeled booking mocks but must wait for B2.2's action/response/error contract before connecting real booking controls.
+Older rows without a request key remain readable without invented quotes/deadlines. Daily price/policy/deadline fields may be null; actions are empty and commands return `legacy_booking`. A separately reviewed migration is needed before making them actionable.
 
-## Errors for the later command layer
+Example: 20–22 November means 3 days and PostgreSQL range `[2026-11-20,2026-11-23)`. A reservation starting 22 November conflicts; starting 23 November is adjacent. One listing represents one physical device.
 
-| SQLSTATE | Meaning                                                                                    |
-| -------- | ------------------------------------------------------------------------------------------ |
-| `23P01`  | Reservation overlap or duplicate open request; use the constraint name to distinguish them |
-| `23514`  | Invalid duration/self-booking or another check violation                                   |
-| `23503`  | Missing or inconsistent listing/owner reference                                            |
-| `42501`  | Grant/RLS denial; never treat as successful mutation                                       |
+## Actions and clock rules
 
-B2.2 must map these to stable application errors without leaking SQL, other renters' identities or raw constraint details. The database guarantees competing overlapping reservations cannot both commit. A preliminary UI availability query does not replace the write-time constraint.
+Calendar boundaries use `Asia/Manila`. Requests need at least 24 hours before **00:00 on the pickup date**, pickup no later than Manila today + 90 days, and 1–30 inclusive days. Request expiry is the earlier of creation + 24 hours or pickup midnight − 2 hours. Acceptance starts a 30-minute payment deadline. Repeated acceptance preserves the original deadline.
 
-## Still required in B2.2 and later phases
+| Current status          | Actor / action                                                              | Result                     |
+| ----------------------- | --------------------------------------------------------------------------- | -------------------------- |
+| `requested`             | Owner accepts before expiry, eligible renter and published/available device | `accepted`; reserves dates |
+| `requested`             | Owner declines with reason                                                  | `declined`                 |
+| `requested`             | Requesting renter cancels with reason                                       | `cancelled`                |
+| `accepted`              | Owner or renter cancels before payment deadline, with reason                | `cancelled`                |
+| `requested`, `accepted` | Trusted expiry at/after deadline                                            | `expired`                  |
 
-- Verified active identity, completed profile and published/active listing checks for request/accept commands.
-- Server-controlled immutable dates, identity and price/deposit snapshots; integer totals; 24-hour advance notice, 90-day horizon and status-transition permissions.
-- Owner response/payment deadlines, explicit expiry, cancellation reasons and retry/idempotency behavior.
-- A **separate physical-readiness check** blocking all new acceptances for overdue/unreturned or disputed devices, including dates beyond the existing range. B2.1's range constraint only covers the stored dates.
-- Privacy-safe public availability exposing dates without booking IDs or participant details.
-- Payment, handover/checklist, return, settlement and dispute dependencies before enabling their transitions. No payment/return/completion simulation is exposed by B2.1.
+Repeated decline/cancel succeeds only for the same actor and trimmed reason; changed retries return `idempotency_conflict`. Terminal bookings cannot reopen. `allowed_actions` is a current-actor UI hint revalidated under database locks. Past deadline means `is_expired:true` and no actions, even if stored status awaits expiry. Reads do not mutate; failed commands roll back their entire transaction, including lazy cleanup.
 
-Until those commands exist, keep booking mutations disabled. Trusted backend/maintenance access still bypasses RLS, so it must enforce the approved command policies; structural duration, ownership and overlap constraints apply to its writes too.
+`requested` does not reserve against other renters. Reserving statuses are `accepted`, `paid`, `handed_over`, `returned`, `disputed`. Exclusion constraints prevent competing acceptances from both committing. The same renter cannot create overlapping open requests/reservations for one device. Commands lock the listing before booking rows and expire due holds before successful writes. Future payment/webhook commands must follow the same lock order and deadline checks.
 
-## Apply and verify locally
+An overdue `handed_over` device or any unresolved `disputed` booking blocks **all new acceptances**, including dates outside the original range. Calendar passage never proves return, completion or deposit release.
+
+## Public availability
+
+Only published listings with eligible owners are visible. `from >= Manila today`, `to >= from`, `to <= today + 119 days`. The returned `BookingAvailability` contains:
+
+```ts
+{
+  listing_id: string;
+  from: string;
+  to: string;
+  timezone: "Asia/Manila";
+  earliest_pickup_date: string;
+  latest_pickup_date: string;
+  max_rental_days: 30;
+  device_available: boolean;
+  blocked_ranges: {
+    from: string;
+    to: string;
+  }
+  [];
+}
+```
+
+Blocked ranges are inclusive and clipped to the query window. They contain no booking IDs, identities, statuses, reasons or payment data. Due accepted holds are omitted; the next successful write expires them before enforcing exclusions. Physical unavailability blocks the whole window without exposing its reason. Earliest/latest dates separately restrict requests; an empty blocked array alone does not authorize an out-of-window request. Availability may change before acceptance.
+
+## Database permissions and expiry
+
+Authenticated entry points: `request_booking(uuid,date,date,uuid)`, `act_on_booking(uuid,text,text)`, `get_booking(uuid)`, `list_my_bookings(text,booking_status,integer,integer)`. Public entry point: `booking_availability(uuid,date,date)`. Ordinary clients still cannot insert/update/delete booking rows. RLS permits participant-only reads. Definer functions pin an empty search path; private helpers have no client execution grants.
+
+The migration enables `pg_cron` and schedules `rentify-booking-expiry` every minute: `select public.expire_booking_holds(100);`. It processes up to 100 listing parents, skips locked parents, prevents concurrent job runs with an advisory lock, and audits expiry once. The bounded function is executable by the service role; there is no HTTP trigger. Successful commands also clean stale holds, so scheduler delay cannot extend deadlines. No HTTP credentials are stored in cron.
+
+Verify `pg_cron` availability/preloading before hosted deployment. Local Supabase and CI test actual scheduled execution. Hosted migration, installation and monitoring remain deployment tasks. See Supabase's [installation](https://supabase.com/docs/guides/cron/install) and [scheduling guide](https://supabase.com/docs/guides/cron/quickstart).
+
+## Error contract
+
+Errors: `{error:{code,message,fields?}}`; `fields` appears for Zod validation. SQL, raw constraints and other participants' data are never echoed. Branch on stable codes and display the human message.
+
+| HTTP      | Codes                                                                                                                                                                                            |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 400       | `validation`, `invalid_body`, `invalid_json`, `invalid_dates`, `invalid_query`, `invalid_action`, `self_booking`, `unsupported_currency`, `price_limit`                                          |
+| 401       | `sign_in`                                                                                                                                                                                        |
+| 403       | `origin`, `profile_required`, `forbidden`                                                                                                                                                        |
+| 404       | `not_found`                                                                                                                                                                                      |
+| 409       | `duplicate_request`, `idempotency_conflict`, `booking_conflict`, `booking_expired`, `invalid_transition`, `unavailable_listing`, `device_unavailable`, `legacy_booking`, `dependencies`, `retry` |
+| 413 / 415 | `too_large` / `content_type`                                                                                                                                                                     |
+| 503       | `unavailable`                                                                                                                                                                                    |
+
+`retry` covers serialization/deadlock/lock/statement timeouts. Retry transient failures with the same key/details; business conflicts require refreshed state or different dates.
+
+## Verification and remaining work
 
 ```sh
-# Apply the new migration without resetting existing development data.
+# Preserve development data; never edit applied migrations.
 npm exec -- supabase migration up --local
 npm run db:lint
 npm run db:test
 npm run db:test:bookings
 npm run db:types
+# Start the app at its configured local origin, then:
+npm run test:bookings:http
 ```
 
-The migration validates existing rows and installs `btree_gist` in the extensions schema. Existing overlong bookings or overlapping reserved/duplicate-open rows will cause the migration to fail atomically; it does not erase or silently cancel them. Review such data before applying. Do not edit an applied migration or use a whole-database reset merely to add B2.1.
+The SQL suite has 240 checks across six files. Booking tests use real Auth, independent PostgreSQL transactions, concurrent retries/acceptances, and actual scheduled expiry. HTTP tests use real SSR cookies for sessions, origin checks, rejected price/identity injection, strict bodies, quote/retry/list/action contracts and date-only availability. Optional `RENTIFY_TEST_BASE_URL` must be a local HTTP origin matching app configuration. Fixtures clean only their exact accounts/listings/uploads/bookings/audit IDs; existing development data is preserved.
 
-SQL tests cover durations, all reserving/non-reserving statuses, same-device versus different-device ranges, duplicate requests, self-booking, owner consistency, generated-column protection, participant reads and denied writes, including accidental-grant defense. Fixtures roll back.
-
-`db:test:bookings` first tests real Auth/HTTP access: owner/renter reads, outsider/anonymous denial and forbidden client creation/update/delete. It then uses real independent PostgreSQL sessions in the local Docker stack: hold the first transaction open and observe the competing transaction's database lock wait before committing. It verifies exactly one overlapping acceptance wins, the loser remains requested, adjacent/different-device reservations succeed independently, and duplicate concurrent requests cannot both be created. Only its isolated fixture IDs/accounts/uploads are removed; existing users, listings, bookings and Storage objects are preserved. Database CI runs this check after the SQL suite.
-
-References: PostgreSQL 17 [range constraints](https://www.postgresql.org/docs/17/rangetypes.html#RANGETYPES-CONSTRAINT) and [btree_gist](https://www.postgresql.org/docs/17/btree-gist.html).
+No `paid`, `handed_over`, `returned`, `completed`, or `disputed` transition is exposed here. No payment simulation endpoint, checkout, refund, payout, automatic completion or deposit release exists. A can connect availability/request/dashboard actions after merge; checkout waits for B2.3 and the pending gateway/deposit/refund decisions.

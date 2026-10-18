@@ -53,52 +53,84 @@ export type Database = {
       };
       bookings: {
         Row: {
+          accepted_at: string | null;
           cancellation_terms: NonNullable<Json>;
+          closed_by: string | null;
           created_at: string;
           currency: string;
+          daily_price_amount: number | null;
           deposit_amount: number;
           id: string;
           listing_id: string;
           owner_id: string;
+          payment_expires_at: string | null;
+          policy_version: string | null;
           rental_amount: number;
           rental_days: number;
           rental_period: unknown;
           renter_id: string;
+          request_expires_at: string | null;
+          request_key: string | null;
           status: Database["public"]["Enums"]["booking_status"];
+          status_reason: string | null;
           updated_at: string;
+          booking_payload: Json | null;
         };
-        ComputedFields: never;
+        ComputedFields: "booking_payload";
         Insert: {
+          accepted_at?: string | null;
           cancellation_terms?: NonNullable<Json>;
+          closed_by?: string | null;
           created_at?: string;
           currency?: string;
+          daily_price_amount?: number | null;
           deposit_amount: number;
           id?: string;
           listing_id: string;
           owner_id: string;
+          payment_expires_at?: string | null;
+          policy_version?: string | null;
           rental_amount: number;
           rental_days?: never;
           rental_period: unknown;
           renter_id: string;
+          request_expires_at?: string | null;
+          request_key?: string | null;
           status?: Database["public"]["Enums"]["booking_status"];
+          status_reason?: string | null;
           updated_at?: string;
         };
         Update: {
+          accepted_at?: string | null;
           cancellation_terms?: NonNullable<Json>;
+          closed_by?: string | null;
           created_at?: string;
           currency?: string;
+          daily_price_amount?: number | null;
           deposit_amount?: number;
           id?: string;
           listing_id?: string;
           owner_id?: string;
+          payment_expires_at?: string | null;
+          policy_version?: string | null;
           rental_amount?: number;
           rental_days?: never;
           rental_period?: unknown;
           renter_id?: string;
+          request_expires_at?: string | null;
+          request_key?: string | null;
           status?: Database["public"]["Enums"]["booking_status"];
+          status_reason?: string | null;
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "bookings_closed_by_fkey";
+            columns: ["closed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "bookings_listing_id_owner_id_fkey";
             columns: ["listing_id", "owner_id"];
@@ -685,6 +717,36 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      act_on_booking: {
+        Args: { p_action: string; p_booking: string; p_reason?: string };
+        Returns: Json;
+      };
+      booking_actor_eligible: { Args: { actor: string }; Returns: boolean };
+      booking_availability: {
+        Args: { p_from: string; p_listing: string; p_to: string };
+        Returns: Json;
+      };
+      booking_device_unavailable: {
+        Args: { at_time: string; listing: string };
+        Returns: boolean;
+      };
+      booking_payload: {
+        Args: {
+          b: Omit<
+            Database["public"]["Tables"]["bookings"]["Row"],
+            Database["public"]["Tables"]["bookings"]["ComputedFields"]
+          >;
+        };
+        Returns: Json;
+      };
+      booking_reserves_dates: {
+        Args: {
+          at_time: string;
+          deadline: string;
+          s: Database["public"]["Enums"]["booking_status"];
+        };
+        Returns: boolean;
+      };
       can_edit_own_profile: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
@@ -698,7 +760,31 @@ export type Database = {
         Args: { object_name: string };
         Returns: boolean;
       };
+      expire_booking_holds: { Args: { p_limit?: number }; Returns: number };
+      expire_listing_booking_holds: {
+        Args: { at_time: string; listing: string };
+        Returns: number;
+      };
+      get_booking: { Args: { p_booking: string }; Returns: Json };
       is_public_listing: { Args: { listing: string }; Returns: boolean };
+      list_my_bookings: {
+        Args: {
+          p_page?: number;
+          p_page_size?: number;
+          p_role?: string;
+          p_status?: Database["public"]["Enums"]["booking_status"];
+        };
+        Returns: Json;
+      };
+      request_booking: {
+        Args: {
+          p_listing: string;
+          p_pickup: string;
+          p_request_key: string;
+          p_return: string;
+        };
+        Returns: Json;
+      };
       save_my_profile: {
         Args: { p_display_name: string; p_phone?: string };
         Returns: undefined;
