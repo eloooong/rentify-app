@@ -69,7 +69,7 @@ grant select, insert, update, delete on public.profiles, public.profile_private,
   to anon, authenticated;
 set local role anon;
 select is((select count(*) from public.profiles where id in ('10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000003')), 3::bigint, 'B1.2 permits active public profiles; production column grants restrict their fields');
-select is((select count(*) from public.listings), 0::bigint, 'RLS hides listings before read policies exist');
+select is((select count(*) from public.listings where id = '30000000-0000-4000-8000-000000000001'), 0::bigint, 'RLS hides the draft fixture listing from anonymous users');
 select is((select count(*) from public.profile_private), 0::bigint, 'RLS hides private phone data');
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);

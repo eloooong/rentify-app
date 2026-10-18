@@ -300,7 +300,7 @@ export type Database = {
           deposit_amount: number;
           description?: string;
           id?: string;
-          owner_id: string;
+          owner_id?: string;
           pickup_area: string;
           status?: string;
           title: string;
@@ -686,9 +686,23 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };
+      can_manage_listing: { Args: { listing: string }; Returns: boolean };
+      can_read_listing_image: {
+        Args: { object_name: string };
+        Returns: boolean;
+      };
+      can_write_listing_image: {
+        Args: { object_name: string };
+        Returns: boolean;
+      };
+      is_public_listing: { Args: { listing: string }; Returns: boolean };
       save_my_profile: {
         Args: { p_display_name: string; p_phone?: string };
         Returns: undefined;
+      };
+      valid_catalog_attributes: {
+        Args: { attrs: Json; category: string };
+        Returns: boolean;
       };
     };
     Enums: {
