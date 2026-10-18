@@ -119,7 +119,7 @@ def run():
         errors = []
         page.on("pageerror", lambda _error: errors.append("pageerror"))
         phase = "anonymous route protection"
-        for path in ("/account", "/update-password", "/owner/listings/new", "/bookings", "/messages", "/checklists", "/admin"):
+        for path in ("/account", "/update-password", "/owner/listings/new", "/owner/private.png", "/account/details.svg", "/bookings", "/messages", "/checklists", "/admin"):
             response = guest.request.get(args.base_url + path, max_redirects=0)
             assert response.status == 303
             location = urllib.parse.urlsplit(response.headers["location"])
