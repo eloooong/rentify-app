@@ -9,21 +9,22 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Rentify design tokens (DRAFT). Single source of truth for colors.
- * Source: docs/design-tokens.json. The colors are approximate, sampled from
- * screenshots of the 2023 desktop designs, not exported from Figma.
- * Replace with the real values once available. Components must use these
- * tokens only (no hard-coded hex values).
+ * Rentify design tokens. Single source of truth for colors.
+ * Approved for the MVP by Person A on 18 October 2026 (see A0.1 in
+ * PROJECT-CHECKLIST.md). Source: docs/design-tokens.json; the colors were
+ * sampled from screenshots of the 2023 desktop designs, not exported from
+ * Figma. If real Figma values become available, replace them here only.
+ * Components must use these tokens only (no hard-coded hex values).
  */
 :root {
   /* Brand primary, chosen by Person A. Use for backgrounds, borders and large elements. */
   --rentify-brand: #e55910;
   --rentify-brand-foreground: #ffffff;
   /*
-   * PROPOSAL, not from Figma. #e55910 on white is 3.64:1, which fails WCAG 2.1 AA
-   * for normal-size text. This darker orange is 5.18:1 with white (both ways)
-   * and is used for small orange text, links, focus, and buttons with small
-   * white text. Needs the designer's approval; change it here to update every use.
+   * Approved accessibility variant (not from Figma). #e55910 on white is 3.64:1,
+   * which fails WCAG 2.1 AA for normal-size text. This darker orange is 5.18:1
+   * with white (both ways) and is used for small orange text, links, focus, and
+   * buttons with small white text. Change it here to update every use.
    */
   --rentify-brand-strong: #c2410c;
 
@@ -114,7 +115,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* The design looks like Poppins, but that is unverified. System fonts until confirmed. */
+  /* Approved: system fonts. The design looks like Poppins (unconfirmed); switch here if it is. */
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
