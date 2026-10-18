@@ -682,7 +682,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      can_edit_own_profile: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      save_my_profile: {
+        Args: { p_display_name: string; p_phone?: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       booking_status:

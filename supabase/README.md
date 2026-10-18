@@ -1,10 +1,10 @@
 # Rentify Supabase setup and contract
 
-## Current scope: B0.3, B0.4, and B1.1
+## Current scope: B0.3, B0.4, B1.1, and B1.2
 
 The initial migration creates 14 application tables, the `booking_status` enum, UUID keys, timestamps/update triggers, foreign keys, indexes, and basic integrity constraints. `profile_private` keeps phone/verification information separate from the future public profile surface.
 
-Every table has RLS enabled. The B0.4 migration allows `anon` and `authenticated` to **select categories only**; neither role can insert, update, or delete categories. All other application tables still deny client access. Trusted server-side `service_role` access is granted explicitly; audit events permit only select/insert for that role. This is a foundation, not a working rental backend.
+Every table has RLS enabled. Categories allow public reads only. B1.2 adds an explicit public profile projection and owner-only name/phone edits, guarded by column privileges, RLS, and triggers; see the [profile contract](../lib/profiles/README.md). All other application tables still deny client access. Trusted server-side `service_role` access is granted explicitly; audit events permit only select/insert for that role. Rental flows remain pending.
 
 ## Local verification
 
@@ -55,7 +55,7 @@ export default async function CategoryList() {
 }
 ```
 
-**The component helper remains read-only.** B1.1 adds a refresh proxy, separate writable action/route clients, verified identity checks, and private auth responses. See the [auth contract and setup guide](../lib/auth/README.md) for routes, cookie handling, local email testing, and the handoff to A. Never trust `getSession()` as authorization. Profiles/listings/storage still wait for their own permissions.
+**The component helper remains read-only.** B1.1 adds a refresh proxy, separate writable action/route clients, verified identity checks, and private auth responses. See the [auth contract and setup guide](../lib/auth/README.md) for routes, cookie handling, local email testing, and the handoff to A. Never trust `getSession()` as authorization. B1.2 adds profile permissions; listings/storage still wait for B1.3.
 
 `db:smoke` makes real HTTP category reads, asserts category writes/private profile reads are denied, and renders a temporary Next.js Server Component using the actual server helper. Its fixture stays in ignored `tmp/`; no diagnostic route is added to the app. An empty category array is expected until B1.3/B1.4 add agreed templates/seeds. SQL tests separately exercise populated reference data for both anonymous and authenticated roles.
 
@@ -95,7 +95,7 @@ Booking states: `requested`, `accepted`, `declined`, `expired`, `cancelled`, `pa
 
 PostgreSQL stores `daterange` canonically with an exclusive upper bound. UI date selection, billed-day semantics, booking windows, cancellations, and inspection timeouts still need agreement in `DECISIONS.md` before booking implementation. Do not infer billing rules from the range representation.
 
-**Wait before real listing integration:** Categories are read-only and currently empty. B1.2/B1.3 must add profile/listing permissions, category templates, storage buckets/policies, and seeds. Profiles are not automatically created at signup yet. Later tasks must add booking transitions/overlap checks, review eligibility, chat participant policies, Realtime publication, notifications, payment webhooks, and admin/dispute logic. Use agreed UI mocks until each handoff is ready. Auth integration is B1.1.
+**Wait before real listing integration:** Categories are read-only and currently empty. B1.2 creates profiles on the verified user's first account-form save. B1.3 must add listing permissions, category templates, storage buckets/policies, and seeds. Later tasks must add booking transitions/overlap checks, review eligibility, chat participant policies, Realtime publication, notifications, payment webhooks, and admin/dispute logic. Use agreed UI mocks until each handoff merges. Auth integration is available from merged B1.1.
 
 ## Entity relationships
 
