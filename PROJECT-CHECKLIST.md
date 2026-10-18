@@ -4,20 +4,20 @@
 
 Keep this file open while working. It is the shared progress checklist, updated by the person finishing each task. It does not update automatically.
 
-**Latest check: 18 October 2026 (Asia/Manila).** B1.1 authentication is complete: [PR #19](https://github.com/eloooong/rentify-app/pull/19) merged with app/database CI and real email/browser journeys passing. B1.2 profiles is implemented on `codex/profile-foundation`: 70 unit tests, 103 SQL checks, production build, lint/types/formatting, API/Server Component smoke, and real browser profile/auth journeys passed locally. CI and Person A's review are merge gates; keep B1.2 unchecked until merge.
+**Latest check: 18 October 2026 (Asia/Manila).** Authentication [PR #19](https://github.com/eloooong/rentify-app/pull/19) and profiles [PR #20](https://github.com/eloooong/rentify-app/pull/20) are merged and verified. B1.3 is implemented on `codex/listing-foundation`: 83 unit tests, 142 SQL checks, production build and real auth/profile/catalog/storage journeys passed locally. Latest CI and Person A's review are merge gates; keep B1.3 unchecked until merge.
 
 **Newly merged:**
 
 - [PR #12 — Person A checklist update](https://github.com/eloooong/rentify-app/pull/12): A0.2 is complete based on A's recorded mobile/desktop accessibility, keyboard, and 375px layout checks. B0.3/B0.4 completion statuses are preserved.
 - [PR #14 — shadcn/ui](https://github.com/eloooong/rentify-app/pull/14): component setup, token mapping, and the `/ui-kit` reference page are on `main`; app and database CI passed. Approved Figma values and mobile design references are still pending, so A0.1 remains partly complete.
 
-Both people should pull updated `main` and run `npm ci` before the next coding task, because #14 changed the committed dependencies. Continue with separate task branches; no package/lockfile edits are currently reserved by these merged PRs.
+Both people should pull updated `main` and run `npm ci` before the next coding task. Continue with separate branches. B1.3 reserves the package/lockfile, catalog migrations/types and database CI while its PR is open; `sharp` becomes a direct pinned dependency for image processing.
 
 ## Next session — who works and who waits
 
-- [ ] **Person B — review handoff: B1.2 profiles.** Branch `codex/profile-foundation` adds account profile completion/editing and public/private permissions. Local checks and real browser journeys passed. [Profile handoff](lib/profiles/README.md). Check the PR's latest CI; Person A reviews before merge. Keep this unchecked until merge. B1.3 listings/storage is next.
+- [ ] **Person B — review handoff: B1.3 listings/storage.** Branch `codex/listing-foundation` adds starter templates, listing APIs, photo records and private storage permissions. Local checks and real browser/storage journeys passed. [Catalog handoff](lib/catalog/README.md). Check the PR's latest CI; Person A reviews before merge. Keep this unchecked until merge. B1.4 demo data is next.
 - [ ] **Person A — next:** pull updated `main`, run `npm ci`, and connect signed-in header navigation using the merged [auth contract](lib/auth/README.md), or build listing screens with clearly labeled mocks. Real Figma values/mobile frames remain a separate design follow-up.
-- **WAIT for A:** authentication can integrate now; profile integration waits for B1.2, and real listings/uploads wait for B1.3. B can implement these backend tasks while A works on separate frontend files. Only one person edits this checklist or shared configuration at a time.
+- **WAIT for A:** authentication and profiles can integrate now; real listings/uploads wait for B1.3. A can build screens with mocks while reviewing the published contract. B owns the backend and storage policies; A owns listing screens and `lib/listings`. Only one person edits this checklist or shared configuration at a time.
 
 ## Where we are now
 
@@ -30,8 +30,8 @@ Both people should pull updated `main` and run `npm ci` before the next coding t
 | Supabase local runtime and application clients                   | B0.4 complete; [PR #9](https://github.com/eloooong/rentify-app/pull/9) merged. Windows setup, reset, 63 SQL checks, real API/Server Component queries, and type verification passed on 18 October 2026                                                                                        |
 | Person A status                                                  | Pointer (#5), draft tokens (#6), draft FAQ/legal text (#7), draft theme/app shell (#10), shell verification (#12), shadcn/UI kit (#14), shadcn devDependency fix (#16), and README/architecture docs (#17) merged. Figma values, `brand-strong` approval and mobile designs remain incomplete |
 | Person A can do now                                              | Build A3.4 help pages from the merged drafts and A1.3/A1.4 listing screens with the merged UI components and typed mocks                                                                                                                                                                      |
-| Person B can do now                                              | Test B1.2 locally and address review on `codex/profile-foundation`; B reserves profile migrations/types and coordinates shared configuration until merge, then starts B1.3 listings/storage                                                                                                   |
-| Next coding handoff                                              | A can continue presentation work with mocks; real listing access waits for B1.2/B1.3 permissions/storage                                                                                                                                                                                      |
+| Person B can do now                                              | Test/review B1.3 on `codex/listing-foundation`; coordinate package/configuration and migration files until merge, then start B1.4 demo data                                                                                                                                                   |
+| Next coding handoff                                              | A can integrate auth/profiles now and connect listings/uploads after B1.3 merges using `lib/catalog/README.md`                                                                                                                                                                                |
 
 Check off a task after its acceptance checks pass and its PR is merged. Preparatory work can happen while a dependency is pending; do not mark a feature done just because it works against a mock.
 
@@ -55,15 +55,15 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 **Together:** record decisions in `DECISIONS.md`: course demo or live pilot, currency, date boundaries, deposits, cancellation/refunds, verification, gateway, and minimum dispute handling. Label unresolved decisions as pending.
 
-**WAIT:** Foundation B0.1–B0.4 and authentication B1.1 are merged and verified. Both start separate task branches from updated `main`. A can connect auth and continue presentation work with mocks; real profiles wait for B1.2, and listings/uploads wait for B1.3. Categories permit public reads but have no seeds yet. Read the [current Supabase contract](supabase/README.md). Coordinate shared-file and dependency changes before editing, and keep at most one migration PR open.
+**WAIT:** Foundation B0.1–B0.4, authentication B1.1, and profiles B1.2 are merged and verified. Both start separate branches from updated `main`. A can connect auth/profiles and continue listing presentation work with mocks; real listings/uploads wait for B1.3. B1.3 adds four starter category templates; demo users/listings remain B1.4. Read the [current Supabase contract](supabase/README.md). Coordinate shared files and keep at most one migration PR open.
 
 ## 1. Accounts and listings
 
 **Person B — you**
 
 - [x] **B1.1** Authentication: signup, email verification, login/logout, password reset, and protected routes. _[PR #19](https://github.com/eloooong/rentify-app/pull/19) merged; 51 unit tests, 63 SQL checks, real browser auth journeys, production build, and CI passed. [Contract and test instructions](lib/auth/README.md). Hosted email/redirect configuration remains a deployment task._
-- [ ] **B1.2** Profiles: profile creation/editing, public versus private fields, protected admin role, and access-policy tests. _Implemented on `codex/profile-foundation`; 70 unit tests, 103 SQL checks, production build and real browser journeys passed locally. [Contract](lib/profiles/README.md). Latest CI must pass and Person A reviews before merge/integration. Hosted migration application remains a deployment task._
-- [ ] **B1.3** Categories, listings, photo records, storage policies, and category templates. Publish this handoff early.
+- [x] **B1.2** Profiles: profile creation/editing, public versus private fields, protected admin role, and access-policy tests. _[PR #20](https://github.com/eloooong/rentify-app/pull/20) merged with passing CI, 70 unit tests, 103 SQL checks and real browser journeys. [Contract](lib/profiles/README.md). Hosted migrations remain a deployment task._
+- [ ] **B1.3** Categories, listings, photo records, storage policies, and category templates. _Implemented on `codex/listing-foundation`; 83 unit tests, 142 SQL checks and real image/catalog browser journeys passed locally. [API/storage contract](lib/catalog/README.md). Latest CI must pass and Person A reviews before merge/integration. A's screens remain in A's branch._
 - [ ] **B1.4** Demo users/listings, reproducible seed/reset commands, and regenerated database types.
 
 **Person A — your friend**

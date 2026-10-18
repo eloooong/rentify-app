@@ -8,6 +8,9 @@ on:
       - lib/supabase/**
       - lib/auth/**
       - lib/profiles/**
+      - lib/catalog/**
+      - app/api/catalog/**
+      - tests/e2e/catalog.py
       - app/(auth)/**
       - app/layout.tsx
       - app/globals.css
@@ -28,6 +31,9 @@ on:
       - lib/supabase/**
       - lib/auth/**
       - lib/profiles/**
+      - lib/catalog/**
+      - app/api/catalog/**
+      - tests/e2e/catalog.py
       - app/(auth)/**
       - app/layout.tsx
       - app/globals.css
@@ -70,7 +76,7 @@ jobs:
         run: npm ci
       - name: Start disposable database and API
         # The CLI's status summary includes local privileged keys; keep it out of logs.
-        run: npm run db:start -- --exclude realtime,storage-api,imgproxy,postgres-meta,studio,logflare,vector,supavisor > /dev/null
+        run: npm run db:start -- --exclude realtime,imgproxy,postgres-meta,studio,logflare,vector,supavisor > /dev/null
       - name: Rebuild from migrations
         run: npm run db:reset
       - name: Check database functions
