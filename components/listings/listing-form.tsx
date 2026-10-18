@@ -24,6 +24,7 @@ import {
   type FieldErrors,
   type ListingStatus,
 } from "@/lib/listings/editor";
+import { apiRequest as request } from "./api-request";
 import { compressImage, ImageError } from "./compress-image";
 
 type NewPhoto = { key: string; blob: Blob; preview: string };
@@ -58,18 +59,6 @@ function initialValues(listing?: CatalogListing): EditorValues {
     pickupArea: listing.pickup_area,
     attributes,
   };
-}
-
-async function request(method: string, url: string, body?: unknown) {
-  const init: RequestInit = { method, credentials: "same-origin" };
-  if (body instanceof FormData) init.body = body;
-  else if (body !== undefined) {
-    init.body = JSON.stringify(body);
-    init.headers = { "Content-Type": "application/json" };
-  }
-  const response = await fetch(url, init);
-  const json = await response.json().catch(() => null);
-  return { ok: response.ok, status: response.status, json };
 }
 
 class SaveError extends Error {

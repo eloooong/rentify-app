@@ -72,3 +72,85 @@ export async function getOwnListing(
     })),
   };
 }
+
+export const OWN_PAGE_SIZE = 20;
+
+export type OwnListingsPage = {
+  listings: (OwnListing & { hasBookings: boolean })[];
+  page: number;
+  total: number;
+  pageSize: number;
+};
+
+/**
+ * The owner's listings, newest first (same order as GET /api/catalog/own),
+ * with photo URLs and whether each listing has booking history. Booking rows
+ * are readable by their owner (bookings_participant_read).
+ */
+export async function listOwnListings(
+  userId: string,
+  page = 1,
+): Promise<OwnListingsPage> {
+  const client = await createClient();
+  const from = (page - 1) * OWN_PAGE_SIZE;
+  const result = await client
+    .from("listings")
+    .select("*", { count: "exact" })
+    .eq("owner_id", userId)
+    .order("created_at", { ascending: false })
+    .order("id")
+    .range(from, from + OWN_PAGE_SIZE - 1);
+
+  // PostgREST answers 416 / PGRST103 for a page past the end (see
+  // lib/search/browse.ts); report the real total instead of failing.
+  if (result.error?.code === "PGRST103") {
+    const total = await client
+      .from("listings")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId);
+    if (total.error) throw new Error("Unable to load your listings.");
+    return {
+      listings: [],
+      page,
+      total: total.count ?? 0,
+      pageSize: OWN_PAGE_SIZE,
+    };
+  }
+  if (result.error) throw new Error("Unable to load your listings.");
+
+  const rows = result.data ?? [];
+  const ids = rows.map((row) => row.id);
+  const [photos, bookings] = ids.length
+    ? await Promise.all([
+        client
+          .from("listing_photos")
+          .select("id,listing_id,position")
+          .in("listing_id", ids)
+          .order("position"),
+        client.from("bookings").select("listing_id").in("listing_id", ids),
+      ])
+    : [
+        { data: [], error: null },
+        { data: [], error: null },
+      ];
+  if (photos.error || bookings.error)
+    throw new Error("Unable to load your listings.");
+  const booked = new Set((bookings.data ?? []).map((row) => row.listing_id));
+
+  return {
+    listings: rows.map((row) => ({
+      ...row,
+      hasBookings: booked.has(row.id),
+      photos: (photos.data ?? [])
+        .filter((photo) => photo.listing_id === row.id)
+        .map((photo) => ({
+          id: photo.id,
+          position: photo.position,
+          url: `/api/catalog/listings/${row.id}/photos/${photo.id}`,
+        })),
+    })),
+    page,
+    total: result.count ?? 0,
+    pageSize: OWN_PAGE_SIZE,
+  };
+}

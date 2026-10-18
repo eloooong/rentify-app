@@ -3,7 +3,13 @@ import { SearchIcon } from "./icons";
 import { MobileMenu } from "./mobile-menu";
 import { getSignedInUser } from "./get-signed-in-user";
 import { NavLink } from "./nav-link";
-import { accountLink, lendLink, primaryLinks, signInLink } from "./nav-links";
+import {
+  accountLink,
+  lendLink,
+  myListingsLink,
+  primaryLinks,
+  signInLink,
+} from "./nav-links";
 import { SignOutButton } from "./sign-out-button";
 
 export async function SiteHeader() {
@@ -24,6 +30,7 @@ export async function SiteHeader() {
           signedIn={user !== null}
           signIn={signInLink}
           account={accountLink}
+          myListings={myListingsLink}
           lend={lendLink}
         />
 
@@ -65,6 +72,9 @@ export async function SiteHeader() {
           ))}
           {user ? (
             <>
+              <NavLink href={myListingsLink.href}>
+                {myListingsLink.label}
+              </NavLink>
               <NavLink href={accountLink.href}>{accountLink.label}</NavLink>
               <SignOutButton />
             </>
