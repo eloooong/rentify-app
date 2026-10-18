@@ -17,6 +17,7 @@ import urllib.request
 import uuid
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect, TimeoutError as PlaywrightTimeoutError
+from catalog import run_catalog, cleanup_catalog
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--base-url", default="http://localhost:3000")
@@ -218,6 +219,9 @@ def run():
             second_page.screenshot(path=str(output / "mobile.png"), full_page=True)
         print("Profile create/edit/remove, public projection, private isolation, role/verification denial: PASS", flush=True)
 
+        phase = "catalog and storage permissions"
+        run_catalog(one, two, guest, args.base_url, api_url, status, session_cookies(one)[1]["access_token"], session_cookies(two)[1]["access_token"])
+
         phase = "forged cookie rejection"
         cookies, session = session_cookies(one)
         session["access_token"] = "invalid.signature.value"
@@ -271,6 +275,7 @@ finally:
         users = request_json(api_url + "/auth/v1/admin/users?page=1&per_page=1000", headers=headers)["users"]
         for user in users:
             if user.get("email") in emails:
+                cleanup_catalog(api_url, headers, user["id"])
                 request_json(api_url + "/auth/v1/admin/users/" + user["id"], method="DELETE", headers=headers)
         print("Fixture Auth users removed.", flush=True)
     except Exception:

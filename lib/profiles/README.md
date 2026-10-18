@@ -24,7 +24,7 @@ const { data, error } = await supabase
   .maybeSingle();
 ```
 
-Active profiles are public; suspended profiles are hidden except from their owner. `role` and `account_status` are not granted to public/authenticated table queries, and `SELECT *` intentionally fails. Never add these fields or private data to a listing projection. `avatar_path` is read-only for clients until B1.3 establishes storage ownership; no bucket or avatar upload is included here.
+Active profiles are public; suspended profiles are hidden except from their owner. `role` and `account_status` are not granted to public/authenticated table queries, and `SELECT *` intentionally fails. Never add these fields or private data to a listing projection. `avatar_path` remains read-only for clients; B1.3's storage handoff covers listing images, and avatar uploads remain a separate feature.
 
 `profile_private` permits authenticated users to select only their own `user_id,phone,phone_verified_at`. Other users receive no rows; anonymous reads fail. `getOwnProfile(userId)` in `lib/profiles/server.ts` loads both records for an authenticated server-rendered account page. Call it after verified identity and pass that user's ID. It does not bypass RLS.
 
@@ -47,6 +47,6 @@ New name/phone constraints are `NOT VALID` to preserve pre-existing foundation r
 
 The SQL suite covers allowed and denied direct access, cross-user isolation, role/verification escalation, actual email confirmation, suspension, atomic rollback, validation, and verification reset/preservation. The existing real auth browser journey now also creates/edits/removes profile data and exercises the public API boundaries with two users. Test users and their cascaded profile rows are removed afterward. Add `--screenshots` for ignored desktop/mobile review captures under `tmp/profile-ui-review/`. Hosted migrations and hosted email services are not applied by local commands.
 
-Person A may connect profile UI after this PR merges. Listing/upload integration still waits for B1.3. Keep header changes in A's branch; this task only extends B's account page.
+Profiles merged in [PR #20](https://github.com/eloooong/rentify-app/pull/20); Person A may connect profile UI now. Listing/upload integration waits for the [B1.3 catalog handoff](../catalog/README.md) to merge. Keep header and listing screen changes in A's branch.
 
 References: [column privileges](https://supabase.com/docs/guides/database/postgres/column-level-security), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [function security](https://www.postgresql.org/docs/17/sql-createfunction.html).
