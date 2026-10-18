@@ -1,6 +1,6 @@
 # Rentify product decisions
 
-**Status: demo booking defaults approved by Person B (Angel) — 18 October 2026.** Person B confirmed sections 1–6 in this chat and authorized B2.1. Approval records the intended behavior; it does not mean every rule is implemented. B2.1 adds structural database safeguards; B2.2 and later phases implement the remaining commands and dependencies. Section 7 stays pending. Record later changes here so both developers follow the same rules. Planning PDFs and demo prices do not override this record.
+**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 are merged. B2.3/B2.4 implementation and provider verification remain pending. Choices are not completed behavior. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
 
 ## 1. First release
 
@@ -63,7 +63,7 @@ For two requests competing for the same dates, at most one acceptance may succee
 - Reject invalid or overflowing amounts. Never trust a total, owner ID, currency or payment status submitted by a client.
 - No hidden charges, automatic late fees or platform fees in the first demo.
 
-Example only: PHP 850/day for 20–22 November gives **PHP 2,550 rent**. If that listing has a PHP 1,700 demo deposit, show a **PHP 4,250 combined quote**. This example does not set a universal deposit or authorize collecting it. Deposit collection/hold/release mechanics remain pending gateway verification.
+Example only: PHP 850/day for 20–22 November gives **PHP 2,550 rent**. If that listing has a PHP 1,700 demo deposit, show a **PHP 4,250 combined quote**. This does not set a universal deposit. Section 7 selects test-only collection/refund behavior; provider verification and settlement implementation remain pending.
 
 ## 6. Identity, access and transitions
 
@@ -79,6 +79,7 @@ Participants may read their own bookings. Public availability exposes unavailabl
 | `requested`, `accepted`           | `expired`     | Trusted server; applicable deadline reached                                                                               |
 | `accepted`                        | `cancelled`   | Renter or owner before payment; record actor and reason                                                                   |
 | `accepted`                        | `paid`        | Trusted payment confirmation within the agreed payment flow; demo simulation is server-only and unavailable in production |
+| `paid`                            | `cancelled`   | Later B2.4 command under section 7's pre-pickup/pre-handover rule, with reason and durable refund obligation              |
 | `paid`                            | `handed_over` | Server after both parties confirm handover and the required checklist in the later checklist feature                      |
 | `handed_over`                     | `returned`    | Server after both parties confirm physical return; this does not approve condition or release money                       |
 | `returned`                        | `completed`   | Both parties approve the return inspection and the later settlement workflow is satisfied                                 |
@@ -86,26 +87,65 @@ Participants may read their own bookings. Public availability exposes unavailabl
 
 Only implement each transition when its payment/checklist/settlement dependency exists. The existing enum is vocabulary, not authorization. `declined`, `expired`, `cancelled` and `completed` are terminal for ordinary users. No participant can edit booking identities, quoted amounts or dates directly, erase history, or reopen a terminal booking.
 
-The end of a rental date does not automatically prove handover, return or completion. Do not auto-complete or auto-release a deposit in B2.1/B2.2. Dispute resolution and paid cancellation transitions require the pending rules below.
+The end of a rental date does not automatically prove handover, return or completion. Do not auto-complete or auto-release a deposit in B2.1/B2.2. Section 7 selects paid cancellation rules; the B2.4 implementation and later dispute resolution dependencies remain required.
 
-## 7. Decisions still pending before money movement
+## 7. Payment defaults selected for the demo
 
-| Topic                                   | Current decision                                                                                                                                |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Payment gateway                         | Pending: verify supported PHP test mode, webhook signatures, idempotency, refunds, authorization/hold windows and payout capabilities           |
-| Deposit amount / custody                | Pending: decide limits and who holds it; do not describe the app as an escrow service                                                           |
-| Cancellation after payment / refunds    | Pending: agree owner/renter cancellation rules, deadlines, amounts and provider fees before implementing B2.3/B2.4                              |
-| No-show / late return / damage          | Pending: agree evidence and handling; do not invent automatic deductions or penalties                                                           |
-| Inspection deadline / automatic release | Pending: no automatic release while unsettled                                                                                                   |
-| Disputes                                | Pending: define admin authority, evidence, response times, appeals and money settlement; never auto-release funds during a dispute              |
-| Live pilot / privacy / retention        | Pending: decide release readiness, permitted identity checks, data access and retention before collecting real user evidence or running rentals |
+**Authority:** on 18 October 2026, Person B (Angel) delegated gateway, deposit and refund choices in this chat: “you decide.” These defaults are adopted for the fictional/test demo. Person A's separate approval is not recorded. Documentation does not prove this project's account is configured; no live payments or owner transfers are authorized.
 
-Until those decisions are agreed, use fictional/test data and keep live payment, payout, refund and deposit-release operations disabled. Never store card details. This document records demo product behavior; it is not a legal agreement or evidence of provider capabilities.
+### Gateway and amounts
+
+Choose **PayMongo Hosted Checkout v2, test mode, GCash only** for the first integration. [Hosted Checkout](https://docs.paymongo.com/docs/payment-channels-hosted-checkout) supports backend session creation and recommends v2. Payment entry stays on the provider's page. Keep credentials server-side and reject live keys/resources. Cards, QR Ph, other wallets, installments, authorization holds and split payments are outside this first slice.
+
+GCash fits the booking horizon: the current [refund guide](https://docs.paymongo.com/docs/payment-acceptance-refunds) documents partial refunds and a 180-day window for GCash, versus 60 days for cards. Rentify's 90-day pickup horizon plus 30-day inclusive rental allows return as late as today + 119 days. Any additional payment method must support the booking and inspection refund period; do not promise deposit refunds beyond its supported window.
+
+Use one checkout session per accepted booking, with rent and refundable deposit as separate line items in one combined **test payment**. Reuse the active session on retries; do not create a replacement while its outcome is unknown. Charge the immutable quote, never client-supplied amounts. Display these payment/refund rules before checkout and record the renter's consent with a payment-policy version, without overwriting the booking's original quote/terms. Incompatible older records require review rather than silent changes. Turn fee pass-through off. No platform/cancellation fee is added; provider fees are an operator expense under this demo policy.
+
+Use the existing listing's nonnegative integer `deposit_amount` snapshot; the catalog default is zero unless the owner sets one. No new percentage, forced repricing or seed changes. Collect rent plus deposit immediately in test money, without a hold/capture workflow. Validate the selected provider's actual amount limits at checkout; never silently change the quote.
+
+Record rent/deposit allocations separately against the same provider payment without double-counting it. A deposit is not rental revenue. This bookkeeping is not escrow or a protected marketplace wallet. Actual custody, merchant eligibility, payout structure and provider approval remain pending before live use. No owner payouts or automatic split transfers are enabled.
+
+### Refund and cancellation rules
+
+| Situation                                                                                                       | Demo rule                                                                                                               |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Before confirmed payment                                                                                        | Existing B2.2 decline/cancel/expiry rules; no refund of money not collected                                             |
+| Paid, before 00:00 Manila on pickup date, and no handover                                                       | Either participant may cancel with a reason; refund 100% of unrefunded rent and deposit, without a cancellation fee     |
+| Pickup date has begun, or handover occurred                                                                     | No self-service cancellation/refund; record an issue for manual review without automatic penalties or forfeiture        |
+| Physical return and condition approved by both participants                                                     | Refund the remaining deposit only, after the checklist/settlement dependency is implemented                             |
+| Duplicate charge, payment for a cancelled/expired booking, or confirmation too late to finalize the reservation | Reconcile the provider payment and refund its unrefunded amount; never revive a terminal booking or charge again        |
+| Failed or unknown refund                                                                                        | Keep the financial obligation visible, retain its reference and retry/reconcile safely; submission alone is not success |
+
+Refund to the original payment method in integer centavos. The total of confirmed and reserved pending refunds must not exceed the amount actually collected. The server controls eligibility and amount; participants cannot supply arbitrary refunds or mark them successful. Do not promise instant arrival. B2.4 must implement paid cancellation and refund permissions, race protection, retries and auditing before enabling these controls.
+
+Zero deposits need no refund. After the later return feature exists, both parties must confirm physical return and approve condition before requesting deposit repayment. No timeout-based release, unilateral owner deduction, damage/late fee or forfeiture for silence. Unresolved issues require manual review. Inspection reminders/escalation must account for the provider's refund deadline; live dispute settlement remains a separate decision. B3.3 implements this lifecycle; B2.3 cannot infer return from dates.
+
+The current [refund guide](https://docs.paymongo.com/docs/payment-acceptance-refunds) includes a test-key example, and the [verification checklist](https://docs.paymongo.com/docs/payment-acceptance-go-live-checklist) calls for test refunds. An [older official guide](https://developers.paymongo.com/v1/docs/refunding-transactions) says refunds require live transactions. Therefore actual full/partial test refunds remain **account-level acceptance checks**. If unavailable, disable gateway refund actions and exercise the policy through an explicitly labeled isolated simulator; never enable live mode to work around the limitation. [Refund resources](https://docs.paymongo.com/reference/refund-resource) distinguish pending/processing/succeeded/failed results.
+
+### Deadlines and payment confirmation
+
+Keep the existing 30-minute acceptance-to-payment deadline. Only the requesting renter may start checkout while verified/active with a complete profile and an eligible accepted booking. Under the existing listing-before-booking lock order, the server validates reservation status, deadline, participants, listing eligibility, physical readiness, currency and quote before finalizing payment.
+
+Require a verified provider result matching internally stored session/payment/booking references, test mode, currency and exact amount. Never trust redirects or client success flags. Transition `accepted -> paid` only while the server deadline is open and the provider reports payment before that deadline. If confirmation reaches the server after the deadline, or cancellation/expiry already won the race, preserve the terminal booking and refund the reconciled payment. Even payment just before the deadline cannot resurrect an expired booking; this intentionally favors an unambiguous reservation over late fulfillment.
+
+On cancellation/expiry, durably enqueue provider-session closure and reconciliation. [Checkout lifecycle documentation](https://docs.paymongo.com/docs/payment-channels-key-concepts) says sessions do not expire automatically; expiry can fail for ongoing/paid payments and has no webhook. A timer/expired QR code cannot close checkout. Retry/reconcile failures, prevent replacement charges, and refund any resulting late payment without extending the database reservation silently.
+
+Verify the raw-body signature before processing; require the test signature and reject live events. Deduplicate event and payment IDs and make ledger/status/audit changes atomic. The detailed [webhook setup guide](https://docs.paymongo.com/docs/developer-tools-webhook-setup-management) specifies timestamp plus raw-body HMAC-SHA256 and separate test/live signatures. Some overview examples simplify this and show different payload envelopes. Pin and verify actual test deliveries for the selected API; do not accept weak fallback formats. Reconcile missed deliveries through authenticated provider reads. Acknowledge safe receipt only after processing or its retry obligation is durably recorded.
+
+### Remaining implementation gates
+
+- **Selected:** gateway/method, immediate test charge, existing deposit snapshot, fee treatment, pre-pickup full refund, late-payment handling and no automatic deductions/releases.
+- **Not configured:** no PayMongo setting was found in standard local environment files. Account ownership, test keys, enabled GCash, HTTPS webhook delivery and actual refund behavior remain unverified. Never paste secrets into chat or commits.
+- **Next B work:** B2.3 implements the adapter, ledger, checkout, signed webhooks and reconciliation; B2.4 implements refunds. Deterministic tests can proceed without credentials, but mocks do not complete external verification.
+- **A wait:** real checkout waits for B's published API contract and merged backend. A2.1/A2.2 may use merged B2.2 APIs now. A retains listing/chat/frontend ownership.
+- **Still pending before live use:** marketplace/custody approval, payout arrangements, dispute authority/evidence/appeals, retention/privacy and deployment readiness. Demo defaults do not settle live policies.
 
 ## 8. Implementation handoff and acceptance examples
 
 B implements the approved booking rules through B2.1/B2.2 in a new task branch, adds migrations and generated types, and publishes exact API fields, errors, status transitions, access rules and date examples. A integrates only after that contract merges; A can keep building its listing editor/management meanwhile.
 
-Required checks include: one-day and three-day totals; rejection of backwards/too-soon/overlong dates; adjacent versus overlapping reservations; self-booking and duplicate requests; exactly one winner under concurrent acceptance; stale holds; deadline boundary checks; immutable quotes after listing price changes; denied participant/outsider actions; and an overdue/disputed device remaining unavailable beyond its original dates.
+Required booking regression checks include: one-day and three-day totals; rejection of backwards/too-soon/overlong dates; adjacent versus overlapping reservations; self-booking and duplicate requests; exactly one winner under concurrent acceptance; stale holds; deadline boundary checks; immutable quotes after listing price changes; denied participant/outsider actions; and an overdue/disputed device remaining unavailable beyond its original dates.
 
-**Decision record:** sections 1–6 approved for the demo by Person B (Angel) on 18 October 2026 in this chat; Person A's separate approval is not recorded. B2.1/B2.2 are authorized. Section 7 remains pending, and payment/checklist/settlement transitions stay gated by their actual dependencies. See the [booking implementation boundary](lib/bookings/README.md). Changing an agreed policy later requires a reviewed change, with existing booking snapshots preserved.
+B2.3/B2.4 checks must cover exact totals, concurrent checkout retries, invalid signatures/live events, duplicate/out-of-order/missed events, cancellation/payment races, late-payment refunds, full/partial refund retries, failed refunds and outsider denial. Verify actual GCash test checkout, signed delivery, session expiry and refunds before claiming the external integration works. Publish exact API/ledger/error contracts before A connects checkout.
+
+**Decision record:** sections 1–6 approved directly by Person B (Angel); section 7 selected under Person B's explicit delegation on 18 October 2026. Person A's separate approval is not recorded. B2.1/B2.2 are merged; B2.3/B2.4 remain unimplemented. Controls stay gated by dependencies and verification. Section 7 supersedes older policy-pending notes for these demo choices; the [B2.2 contract](lib/bookings/README.md) remains the boundary of implemented behavior. Reviewed policy changes must preserve existing booking snapshots.
