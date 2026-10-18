@@ -6,8 +6,9 @@ export const primaryLinks: NavItem[] = [
   { href: "/listings", label: "All items" },
 ];
 
-// Account menu needs auth (Phase 1). Until then the shell links to sign in.
+// Shown when signed out / signed in. Both routes are Person B's auth pages (B1.1).
 export const signInLink: NavItem = { href: "/login", label: "Sign in" };
+export const accountLink: NavItem = { href: "/account", label: "Account" };
 
 export const lendLink: NavItem = { href: "/owner/listings/new", label: "Lend" };
 

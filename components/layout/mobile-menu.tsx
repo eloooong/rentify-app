@@ -4,16 +4,25 @@ import { useRef } from "react";
 import { CloseIcon, MenuIcon } from "./icons";
 import { NavLink } from "./nav-link";
 import type { NavItem } from "./nav-links";
+import { SignOutButton } from "./sign-out-button";
 
 type MobileMenuProps = {
   links: NavItem[];
+  signedIn: boolean;
   signIn: NavItem;
+  account: NavItem;
   lend: NavItem;
 };
 
 // Uses the native <dialog>: showModal() traps focus, makes the page behind inert,
 // and closes on Escape, so no extra dependency or focus-trap code is needed.
-export function MobileMenu({ links, signIn, lend }: MobileMenuProps) {
+export function MobileMenu({
+  links,
+  signedIn,
+  signIn,
+  account,
+  lend,
+}: MobileMenuProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   return (
@@ -68,9 +77,20 @@ export function MobileMenu({ links, signIn, lend }: MobileMenuProps) {
                   <NavLink href={item.href}>{item.label}</NavLink>
                 </li>
               ))}
-              <li className="[&>a]:flex [&>a]:min-h-11 [&>a]:items-center">
-                <NavLink href={signIn.href}>{signIn.label}</NavLink>
-              </li>
+              {signedIn ? (
+                <>
+                  <li className="[&>a]:flex [&>a]:min-h-11 [&>a]:items-center">
+                    <NavLink href={account.href}>{account.label}</NavLink>
+                  </li>
+                  <li className="flex min-h-11 flex-col justify-center">
+                    <SignOutButton className="text-left" />
+                  </li>
+                </>
+              ) : (
+                <li className="[&>a]:flex [&>a]:min-h-11 [&>a]:items-center">
+                  <NavLink href={signIn.href}>{signIn.label}</NavLink>
+                </li>
+              )}
               <li className="pt-2">
                 <NavLink href={lend.href} variant="button">
                   {lend.label}
