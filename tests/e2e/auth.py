@@ -255,7 +255,8 @@ def run():
         sign_in(reset_page, email_one, new_password)
         expect(reset_page.get_by_role("heading", name="Your account", exact=True)).to_be_visible()
         phase = "logout"
-        reset_page.get_by_role("button", name="Sign out", exact=True).click()
+        # The header also has a Sign out button; target the account page's own form.
+        reset_page.get_by_role("main").get_by_role("button", name="Sign out", exact=True).click()
         expect(reset_page).to_have_url(args.base_url + "/login?notice=signed-out")
         assert recovery.request.get(args.base_url + "/account", max_redirects=0).status == 303
         print("Recovery across browsers, mismatch validation, password replacement, logout: PASS", flush=True)

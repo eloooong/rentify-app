@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { SearchIcon } from "./icons";
 import { MobileMenu } from "./mobile-menu";
+import { getSignedInUser } from "./get-signed-in-user";
 import { NavLink } from "./nav-link";
-import { lendLink, primaryLinks, signInLink } from "./nav-links";
+import { accountLink, lendLink, primaryLinks, signInLink } from "./nav-links";
+import { SignOutButton } from "./sign-out-button";
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const user = await getSignedInUser();
+
   return (
     <header className="border-b border-border bg-surface">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-6">
@@ -15,7 +19,13 @@ export function SiteHeader() {
           Rentify
         </Link>
 
-        <MobileMenu links={primaryLinks} signIn={signInLink} lend={lendLink} />
+        <MobileMenu
+          links={primaryLinks}
+          signedIn={user !== null}
+          signIn={signInLink}
+          account={accountLink}
+          lend={lendLink}
+        />
 
         {/* One search form: full-width second row on phones, inline from md up. */}
         <form
@@ -53,7 +63,14 @@ export function SiteHeader() {
               {item.label}
             </NavLink>
           ))}
-          <NavLink href={signInLink.href}>{signInLink.label}</NavLink>
+          {user ? (
+            <>
+              <NavLink href={accountLink.href}>{accountLink.label}</NavLink>
+              <SignOutButton />
+            </>
+          ) : (
+            <NavLink href={signInLink.href}>{signInLink.label}</NavLink>
+          )}
           <NavLink href={lendLink.href} variant="button">
             {lendLink.label}
           </NavLink>
