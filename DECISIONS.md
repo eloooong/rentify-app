@@ -1,6 +1,6 @@
 # Rentify product decisions
 
-**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 and B2.3 backend are merged. B2.4 is implemented on `codex/cancellation-refunds`, pending review/merge; actual checkout/refund provider verification remains pending. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
+**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 and B2.3 backend are merged. B2.4 is implemented in [PR #38](https://github.com/eloooong/rentify-app/pull/38) (`codex/cancellation-refunds`), pending review/merge; actual checkout/refund provider verification remains pending. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
 
 ## 1. First release
 
@@ -136,7 +136,7 @@ Verify the raw-body signature before processing; require the test signature and 
 
 - **Selected:** gateway/method, immediate test charge, existing deposit snapshot, fee treatment, pre-pickup full refund, late-payment handling and no automatic deductions/releases.
 - **Not configured:** no PayMongo setting was found in standard local environment files. Account ownership, test keys, enabled GCash, HTTPS webhook delivery and actual refund behavior remain unverified. Never paste secrets into chat or commits.
-- **Implementation:** B2.3's [payment contract](lib/payments/README.md) and backend merged in [PR #36](https://github.com/eloooong/rentify-app/pull/36), both CI workflows passed. B2.4's [paid cancellation/refund backend](lib/payments/REFUNDS.md) is implemented on `codex/cancellation-refunds`, pending review/merge. Person B has no PayMongo account yet. Both checkout and separate refund execution opt-in remain disabled; deterministic tests do not complete external verification.
+- **Implementation:** B2.3's [payment contract](lib/payments/README.md) and backend merged in [PR #36](https://github.com/eloooong/rentify-app/pull/36), both CI workflows passed. B2.4's [paid cancellation/refund backend](lib/payments/REFUNDS.md) is implemented in [PR #38](https://github.com/eloooong/rentify-app/pull/38) (`codex/cancellation-refunds`), pending review/merge. Person B has no PayMongo account yet. Both checkout and separate refund execution opt-in remain disabled; deterministic tests do not complete external verification.
 - **A wait:** A may integrate merged B2.2 bookings and B2.3 checkout contracts. Actual hosted checkout waits for test configuration/verification. B2.4 refund controls wait for its merge/handoff; actual refund execution also needs verified account support. A retains frontend ownership.
 - **Still pending before live use:** marketplace/custody approval, payout arrangements, dispute authority/evidence/appeals, retention/privacy and deployment readiness. Demo defaults do not settle live policies.
 
