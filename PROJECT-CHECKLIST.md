@@ -4,7 +4,7 @@
 
 Keep this file open while working. It is the shared progress checklist, updated by the person finishing each task. It does not update automatically.
 
-**Latest check: 18 October 2026 (Asia/Manila).** Authentication [PR #19](https://github.com/eloooong/rentify-app/pull/19), profiles [PR #20](https://github.com/eloooong/rentify-app/pull/20), and catalog/storage [PR #21](https://github.com/eloooong/rentify-app/pull/21) are merged. B1.4 demo seed/reset tooling is implemented on `codex/demo-data`: 83 unit tests, five demo-tooling tests (including real local integration), 142 SQL checks, build, type regeneration without drift, and browser auth/profile/catalog/demo journeys passed locally. Keep B1.4 unchecked until Person A reviews, CI passes, and it is merged and verified.
+**Latest check: 18 October 2026 (Asia/Manila).** Authentication [PR #19](https://github.com/eloooong/rentify-app/pull/19), profiles [PR #20](https://github.com/eloooong/rentify-app/pull/20), and catalog/storage [PR #21](https://github.com/eloooong/rentify-app/pull/21) are merged. B1.4 demo seed/reset tooling is ready in [PR #23](https://github.com/eloooong/rentify-app/pull/23): 83 unit tests, five demo-tooling tests (including real local integration), 142 SQL checks, build, type regeneration without drift, and browser auth/profile/catalog/demo journeys passed locally. Person A's signed-in header/browse work is open in [PR #22](https://github.com/eloooong/rentify-app/pull/22), with no changed files overlapping B1.4 at this check. Keep B1.4 unchecked until Person A reviews, CI passes, and it is merged and verified.
 
 **Newly merged:**
 
@@ -15,7 +15,7 @@ Both people should pull updated `main` and run `npm ci` before the next coding t
 
 ## Next session — who works and who waits
 
-- [ ] **Person B — review handoff: B1.4 local demo data.** Branch `codex/demo-data` adds repeatable local accounts, profiles, listings and illustrative photos, with a confirmed reset limited to reserved demo listings. Local checks passed and demo data is available on B's machine. [Commands and handoff](supabase/DEMO-DATA.md). Person A reviews and CI passes before merge; keep this unchecked until merged and verified.
+- [ ] **Person B — review handoff: B1.4 local demo data.** [PR #23](https://github.com/eloooong/rentify-app/pull/23), branch `codex/demo-data`, adds repeatable local accounts, profiles, listings and illustrative photos, with a confirmed reset limited to reserved demo listings. Local checks passed and demo data is available on B's machine. [Commands and handoff](supabase/DEMO-DATA.md). Person A reviews and CI passes before merge; keep this unchecked until merged and verified.
 - [ ] **Person A — next:** pull updated `main`, run `npm ci`, connect signed-in header navigation using the merged [auth contract](lib/auth/README.md), and build listing screens against the merged [catalog APIs](lib/catalog/README.md). Review B1.4 before merge. Real Figma values/mobile frames remain a separate design follow-up.
 - **WAIT points:** A can integrate real auth, profiles, listings and uploads now using the merged contracts. Wait for B1.4 to merge before pulling its demo tooling. B owns the backend/storage policies; A owns listing screens and `lib/listings`. Only one person edits this checklist or shared configuration at a time. Booking/payment integration still waits for its contracts and agreed policies.
 
@@ -70,7 +70,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 - [ ] **A1.1** Listing create/edit form, category fields, and photo upload.
 - [ ] **A1.2** My listings page, publish/pause actions, and delete confirmation.
-- [ ] **A1.3** Browse/search, combined filters, sorting, pagination, and URL state.
+- [ ] **A1.3** Browse/search, combined filters, sorting, pagination, and URL state. _Person A's signed-in header/browse implementation is open in [PR #22](https://github.com/eloooong/rentify-app/pull/22). Leave unchecked until review, CI, merge and verification._
 - [ ] **A1.4** Listing details: photos, specs, price/deposit, owner information, and unavailable-listing handling.
 
 **WAIT:** B1.3 is merged and its tables, storage paths, policies and types are published; A can connect real listings/uploads now. A reports missing fields/policies to B instead of editing migrations. B completes B1.4 demo tooling while A implements listing screens. Review and merge B1.4 before both rely on its commands; each developer seeds their own local database.
