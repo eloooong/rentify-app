@@ -6,6 +6,15 @@ on:
     paths:
       - supabase/**
       - lib/supabase/**
+      - lib/auth/**
+      - app/(auth)/**
+      - app/layout.tsx
+      - app/globals.css
+      - components/ui/**
+      - components/layout/**
+      - proxy.ts
+      - next.config.ts
+      - tests/e2e/auth.py
       - .github/workflows/database.yml
       - .prettierrc.json
       - .node-version
@@ -16,6 +25,15 @@ on:
     paths:
       - supabase/**
       - lib/supabase/**
+      - lib/auth/**
+      - app/(auth)/**
+      - app/layout.tsx
+      - app/globals.css
+      - components/ui/**
+      - components/layout/**
+      - proxy.ts
+      - next.config.ts
+      - tests/e2e/auth.py
       - .github/workflows/database.yml
       - .prettierrc.json
       - .node-version
@@ -37,6 +55,7 @@ jobs:
     env:
       DO_NOT_TRACK: "1"
       SUPABASE_TELEMETRY_DISABLED: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -48,7 +67,8 @@ jobs:
       - name: Install pinned project tooling
         run: npm ci
       - name: Start disposable database and API
-        run: npm run db:start -- --exclude realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,logflare,vector,supavisor
+        # The CLI's status summary includes local privileged keys; keep it out of logs.
+        run: npm run db:start -- --exclude realtime,storage-api,imgproxy,postgres-meta,studio,logflare,vector,supavisor > /dev/null
       - name: Rebuild from migrations
         run: npm run db:reset
       - name: Check database functions
@@ -67,6 +87,29 @@ jobs:
           name: database-types
           path: lib/supabase/database.types.ts
           retention-days: 7
+      - name: Install isolated browser test tooling
+        run: |
+          python3 -m venv /tmp/rentify-auth-python
+          /tmp/rentify-auth-python/bin/pip install playwright==1.64.0
+          /tmp/rentify-auth-python/bin/python -m playwright install --with-deps chromium
+      - name: Build and start the app with disposable local public settings
+        run: |
+          npm run db:env
+          npm run build
+          npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/rentify-auth-next.log 2>&1 &
+          echo $! > /tmp/rentify-auth-next.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:3000/login > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/rentify-auth-next.log
+          exit 1
+      - name: Test real signup, verification, refresh, recovery, and permissions
+        run: /tmp/rentify-auth-python/bin/python tests/e2e/auth.py
+      - name: Stop auth journey app
+        if: always()
+        run: |
+          if [ -f /tmp/rentify-auth-next.pid ]; then kill "$(cat /tmp/rentify-auth-next.pid)" || true; fi
       - name: Stop disposable database
         if: always()
         run: npm run db:stop -- --no-backup

@@ -1,6 +1,6 @@
 # Rentify Supabase setup and contract
 
-## Current scope: B0.3 and B0.4
+## Current scope: B0.3, B0.4, and B1.1
 
 The initial migration creates 14 application tables, the `booking_status` enum, UUID keys, timestamps/update triggers, foreign keys, indexes, and basic integrity constraints. `profile_private` keeps phone/verification information separate from the future public profile surface.
 
@@ -28,7 +28,7 @@ Use `npm run db:reset` only when you intend to **discard this project's local da
 
 Person B verified this setup on Windows on **18 October 2026**, after enabling Virtual Machine Platform and restarting: WSL 3.0.3, Docker Desktop 4.95.0 (Linux engine 29.8.2), and the pinned Supabase CLI 2.121.0. Docker's installer signature and release checksum were checked before installation. Reopen existing terminals after installing Docker if they have not picked up its new PATH entry.
 
-Local `db:start`, `db:reset`, `db:env`, `db:lint`, `db:test` (**63 checks**), `db:smoke`, and `db:types` all passed. Regenerated types matched the committed file exactly. Studio and the email inbox returned HTTP 200; `.env.local` contains only the three documented public settings and is ignored by Git. The test fixtures roll back, and categories remain empty until the seed task. [PR #9](https://github.com/eloooong/rentify-app/pull/9) is merged; its independent Linux database/API CI also passed. Hosted Supabase, deployed environments, and authentication flows are not configured by this local setup.
+Local `db:start`, `db:reset`, `db:env`, `db:lint`, `db:test` (**63 checks**), `db:smoke`, and `db:types` all passed. Regenerated types matched the committed file exactly. Studio and the email inbox returned HTTP 200; `.env.local` contains only the three documented public settings and is ignored by Git. The test fixtures roll back, and categories remain empty until the seed task. [PR #9](https://github.com/eloooong/rentify-app/pull/9) is merged; its independent Linux database/API CI also passed. Hosted Supabase and deployed environments remain unconfigured. B1.1 adds local auth flows in the linked auth contract.
 
 ## Typed clients
 
@@ -55,7 +55,7 @@ export default async function CategoryList() {
 }
 ```
 
-**The server helper is read-only:** Server Components cannot persist cookies. B1.1 must add a refresh proxy and writable clients for auth actions/callbacks, forward refresh cookies/cache headers, and verify identities with `getClaims()`/`getUser()`. Do not use this helper for login/logout or trust `getSession()` as authorization. Protected routes and auth flows are not implemented in B0.4.
+**The component helper remains read-only.** B1.1 adds a refresh proxy, separate writable action/route clients, verified identity checks, and private auth responses. See the [auth contract and setup guide](../lib/auth/README.md) for routes, cookie handling, local email testing, and the handoff to A. Never trust `getSession()` as authorization. Profiles/listings/storage still wait for their own permissions.
 
 `db:smoke` makes real HTTP category reads, asserts category writes/private profile reads are denied, and renders a temporary Next.js Server Component using the actual server helper. Its fixture stays in ignored `tmp/`; no diagnostic route is added to the app. An empty category array is expected until B1.3/B1.4 add agreed templates/seeds. SQL tests separately exercise populated reference data for both anonymous and authenticated roles.
 
