@@ -1,6 +1,6 @@
 # Rentify Supabase setup and contract
 
-## Current scope: B0.3–B0.4 and B1.1–B1.3
+## Current scope: B0.3–B0.4 and B1.1–B1.4
 
 The initial migration creates 14 application tables, the `booking_status` enum, UUID keys, timestamps/update triggers, foreign keys, indexes, and basic integrity constraints. `profile_private` keeps phone/verification information separate from the future public profile surface.
 
@@ -28,7 +28,9 @@ Use `npm run db:reset` only when you intend to **discard this project's local da
 
 Person B verified this setup on Windows on **18 October 2026**, after enabling Virtual Machine Platform and restarting: WSL 3.0.3, Docker Desktop 4.95.0 (Linux engine 29.8.2), and the pinned Supabase CLI 2.121.0. Docker's installer signature and release checksum were checked before installation. Reopen existing terminals after installing Docker if they have not picked up its new PATH entry.
 
-Local `db:start`, `db:reset`, `db:env`, `db:lint`, `db:test` (**63 checks**), `db:smoke`, and `db:types` all passed. Regenerated types matched the committed file exactly. Studio and the email inbox returned HTTP 200; `.env.local` contains only the three documented public settings and is ignored by Git. The test fixtures roll back, and categories remain empty until the seed task. [PR #9](https://github.com/eloooong/rentify-app/pull/9) is merged; its independent Linux database/API CI also passed. Hosted Supabase and deployed environments remain unconfigured. B1.1 adds local auth flows in the linked auth contract.
+The B0.4 baseline checks passed: local `db:start`, `db:reset`, `db:env`, `db:lint`, `db:test` (**63 checks at that stage**), `db:smoke`, and `db:types`. Regenerated types matched the committed file exactly. Studio and the email inbox returned HTTP 200; `.env.local` contains only the three documented public settings and is ignored by Git. The test fixtures roll back. [PR #9](https://github.com/eloooong/rentify-app/pull/9) is merged; its independent Linux database/API CI also passed. B1.3 subsequently adds four category templates and expands SQL coverage. Hosted Supabase and deployed environments remain unconfigured. B1.1 adds local auth flows in the linked auth contract.
+
+B1.4 adds `npm run db:demo` for two local demo accounts, four published listings and one private draft with real illustrative WebP uploads. It preserves existing data on rerun. The separate scoped reset requires explicit confirmation and refuses booking-linked fixtures. See [demo credentials, commands, tests and handoff](DEMO-DATA.md); never use the whole-database reset merely to refresh demo listings.
 
 ## Typed clients
 
@@ -57,7 +59,7 @@ export default async function CategoryList() {
 
 **The component helper remains read-only.** B1.1 adds a refresh proxy, separate writable action/route clients, verified identity checks, and private auth responses. See the [auth contract and setup guide](../lib/auth/README.md) for routes, cookie handling, local email testing, and the handoff to A. Never trust `getSession()` as authorization. B1.2 adds profile permissions; B1.3 adds listing/storage permissions and API routes using public clients and RLS.
 
-`db:smoke` makes real HTTP category reads, asserts category writes/private profile reads are denied, and renders a temporary Next.js Server Component using the actual server helper. Its fixture stays in ignored `tmp/`; no diagnostic route is added to the app. B1.3 installs four starter category templates; demo users/listings remain B1.4. SQL tests exercise populated reference data and direct permissions for anonymous and authenticated roles.
+`db:smoke` makes real HTTP category reads, asserts category writes/private profile reads are denied, and renders a temporary Next.js Server Component using the actual server helper. Its fixture stays in ignored `tmp/`; no diagnostic route is added to the app. B1.3 installs four starter category templates; B1.4 adds opt-in local demo users/listings. SQL tests exercise populated reference data and direct permissions for anonymous and authenticated roles.
 
 ## Types and migration workflow
 
@@ -95,7 +97,7 @@ Booking states: `requested`, `accepted`, `declined`, `expired`, `cancelled`, `pa
 
 PostgreSQL stores `daterange` canonically with an exclusive upper bound. UI date selection, billed-day semantics, booking windows, cancellations, and inspection timeouts still need agreement in `DECISIONS.md` before booking implementation. Do not infer billing rules from the range representation.
 
-**Integration gate:** Auth B1.1 and profiles B1.2 are merged. Connect listing/upload screens after B1.3's PR merges, using the [catalog API and photo contract](../lib/catalog/README.md). Categories contain four read-only starter templates; demo users/listings remain B1.4. Later tasks must add booking transitions/overlap checks, review eligibility, chat participant policies, Realtime publication, notifications, payment webhooks, and admin/dispute logic. Use agreed UI mocks until each handoff merges.
+**Integration gate:** Auth B1.1, profiles B1.2 and catalog/storage B1.3 are merged. Person A can connect listing/upload screens using the [catalog API and photo contract](../lib/catalog/README.md). Categories contain four read-only starter templates; B1.4's [local demo tooling](DEMO-DATA.md) supplies opt-in fixtures. Later tasks must add booking transitions/overlap checks, review eligibility, chat participant policies, Realtime publication, notifications, payment webhooks, and admin/dispute logic. Use agreed UI mocks until each handoff merges.
 
 ## Entity relationships
 

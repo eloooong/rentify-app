@@ -83,6 +83,8 @@ jobs:
         run: npm run db:lint
       - name: Test constraints and access boundaries
         run: npm run db:test
+      - name: Test local demo seed, preservation, privacy, and scoped reset
+        run: npm run db:demo:test
       - name: Test real HTTP access and Server Component client
         run: npm run db:smoke
       - name: Generate types and check drift
