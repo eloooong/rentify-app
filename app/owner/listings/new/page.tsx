@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LoadError, ProfileRequired } from "@/components/listings/editor-shell";
 import { ListingForm } from "@/components/listings/listing-form";
 import { requireUser } from "@/lib/auth/session";
@@ -29,6 +30,14 @@ export default async function NewListingPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <nav aria-label="Breadcrumb" className="text-sm">
+        <Link
+          href="/owner/listings"
+          className="text-muted-foreground hover:text-brand-strong hover:underline"
+        >
+          ← My listings
+        </Link>
+      </nav>
       <div>
         <h1 className="text-3xl font-semibold text-fg">List a device</h1>
         <p className="mt-1 text-muted-foreground">

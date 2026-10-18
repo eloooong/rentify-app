@@ -60,6 +60,14 @@ export default async function EditListingPage(
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <nav aria-label="Breadcrumb" className="text-sm">
+        <Link
+          href="/owner/listings"
+          className="text-muted-foreground hover:text-brand-strong hover:underline"
+        >
+          ← My listings
+        </Link>
+      </nav>
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold text-fg">Edit listing</h1>
         {listing && (

@@ -11,6 +11,7 @@ type MobileMenuProps = {
   signedIn: boolean;
   signIn: NavItem;
   account: NavItem;
+  myListings: NavItem;
   lend: NavItem;
 };
 
@@ -21,6 +22,7 @@ export function MobileMenu({
   signedIn,
   signIn,
   account,
+  myListings,
   lend,
 }: MobileMenuProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -79,6 +81,9 @@ export function MobileMenu({
               ))}
               {signedIn ? (
                 <>
+                  <li className="[&>a]:flex [&>a]:min-h-11 [&>a]:items-center">
+                    <NavLink href={myListings.href}>{myListings.label}</NavLink>
+                  </li>
                   <li className="[&>a]:flex [&>a]:min-h-11 [&>a]:items-center">
                     <NavLink href={account.href}>{account.label}</NavLink>
                   </li>
