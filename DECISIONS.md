@@ -1,20 +1,20 @@
 # Rentify product decisions
 
-**Status: proposed defaults for review — 18 October 2026.** These recommendations are not implemented or agreed policies yet. Confirm the booking rules before B2.1/B2.2 uses them. Record later changes here so Person A's screens and Person B's backend follow the same rules. Planning PDFs and demo prices do not override this record.
+**Status: demo booking defaults approved by Person B (Angel) — 18 October 2026.** Person B confirmed sections 1–6 in this chat and authorized B2.1. Approval records the intended behavior; it does not mean every rule is implemented. B2.1 adds structural database safeguards; B2.2 and later phases implement the remaining commands and dependencies. Section 7 stays pending. Record later changes here so both developers follow the same rules. Planning PDFs and demo prices do not override this record.
 
 ## 1. First release
 
-**Proposed:** build a local/staging course demo first, using fictional inventory and test payments only. Use PHP and `Asia/Manila` for booking dates. Store timestamps in UTC and display them in Manila time. This does not authorize real rentals, charges, deposits or payouts.
+**Agreed for the demo:** build a local/staging course demo first, using fictional inventory and test payments only. Use PHP and `Asia/Manila` for booking dates. Store timestamps in UTC and display them in Manila time. This does not authorize real rentals, charges, deposits or payouts.
 
 One listing represents **one physical device**. Multi-unit inventory, hourly rentals, extensions, discounts and platform fees are outside the first booking demo. Only published listings from active owners accept new requests. Owners can pause a listing to stop new requests; pausing never cancels an existing reservation or removes the participants' access to it.
 
 ## 2. Dates and rental days
 
-**Proposed:** the renter chooses a pickup date and a return date. **Both dates are charged and reserved.** A same-date rental costs one day. The next booking can start the following calendar day; there is no same-day turnover in the first release.
+**Agreed for the demo:** the renter chooses a pickup date and a return date. **Both dates are charged and reserved.** A same-date rental costs one day. The next booking can start the following calendar day; there is no same-day turnover in the first release.
 
 Example: pickup **20 November**, return **22 November** means **three rental days**. The database stores `[2026-11-20,2026-11-23)`, with an exclusive upper bound. A booking starting 22 November conflicts; one starting 23 November does not, subject to the device being returned and cleared.
 
-| Rule                       | Proposed default                                                                                                       |
+| Rule                       | Agreed default                                                                                                         |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Minimum / maximum duration | 1 / 30 calendar days, inclusive                                                                                        |
 | Advance notice             | Request at least 24 hours before 00:00 Manila time on the pickup date                                                  |
@@ -26,9 +26,9 @@ The notice rule is evaluated by the server clock. For example, at 10:00 on 18 No
 
 ## 3. Requests, reservation and expiry
 
-**Proposed:** a request is an expression of interest. It does **not** reserve the device. Different renters may request overlapping dates; only one overlapping reservation can be accepted.
+**Agreed for the demo:** a request is an expression of interest. It does **not** reserve the device. Different renters may request overlapping dates; only one overlapping reservation can be accepted.
 
-| Stage       | Proposed rule                                                                                                                                     |
+| Stage       | Agreed rule                                                                                                                                       |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `requested` | Owner can accept or decline; renter can cancel. Expires at the earlier of creation + 24 hours or two hours before the pickup date begins          |
 | `accepted`  | Immediately reserves the dates. Renter has 30 minutes from acceptance to complete test payment; no new payment attempt starts after that deadline |
@@ -43,7 +43,7 @@ Leave other renters' overlapping requests pending unless the owner declines them
 
 ## 4. Availability and concurrent requests
 
-**Proposed:** the statuses below define a date reservation. Enforce overlap protection inside PostgreSQL, including concurrent acceptance attempts; a frontend availability check is only a preview.
+**Agreed for the demo:** the statuses below define a date reservation. Enforce overlap protection inside PostgreSQL, including concurrent acceptance attempts; a frontend availability check is only a preview.
 
 | Blocks overlapping dates                                  | Does not block dates                                         |
 | --------------------------------------------------------- | ------------------------------------------------------------ |
@@ -55,7 +55,7 @@ For two requests competing for the same dates, at most one acceptance may succee
 
 ## 5. Price and deposit snapshot
 
-**Proposed:** the server reads the listing price, currency and deposit when creating the request. Store that quote with the booking and keep it through its request/acceptance deadlines. Later listing price edits affect new requests only. An owner who does not want to honor an existing quote can decline the unpaid request; they cannot increase its total silently.
+**Agreed for the demo:** the server reads the listing price, currency and deposit when creating the request. Store that quote with the booking and keep it through its request/acceptance deadlines. Later listing price edits affect new requests only. An owner who does not want to honor an existing quote can decline the unpaid request; they cannot increase its total silently.
 
 - `rental_days = return_date - pickup_date + 1`.
 - `rental_amount = daily_price_amount × rental_days`, computed in integer centavos.
@@ -67,7 +67,7 @@ Example only: PHP 850/day for 20–22 November gives **PHP 2,550 rent**. If that
 
 ## 6. Identity, access and transitions
 
-**Proposed:** requesting and accepting require a verified signed-in user, an active account and a completed profile. An owner cannot book their own listing. The server derives the renter from the verified session and the owner from the listing.
+**Agreed for the demo:** requesting and accepting require a verified signed-in user, an active account and a completed profile. An owner cannot book their own listing. The server derives the renter from the verified session and the owner from the listing.
 
 Participants may read their own bookings. Public availability exposes unavailable dates only, never another renter's identity, phone, booking ID or payment details. Owners cannot change a renter's payment status; renters cannot approve themselves. Privileged access is server-enforced and audited.
 
@@ -100,12 +100,12 @@ The end of a rental date does not automatically prove handover, return or comple
 | Disputes                                | Pending: define admin authority, evidence, response times, appeals and money settlement; never auto-release funds during a dispute              |
 | Live pilot / privacy / retention        | Pending: decide release readiness, permitted identity checks, data access and retention before collecting real user evidence or running rentals |
 
-Until those decisions are agreed, use fictional/test data and keep live payment, payout, refund and deposit-release operations disabled. Never store card details. This document proposes product behavior; it is not a legal agreement or evidence of provider capabilities.
+Until those decisions are agreed, use fictional/test data and keep live payment, payout, refund and deposit-release operations disabled. Never store card details. This document records demo product behavior; it is not a legal agreement or evidence of provider capabilities.
 
 ## 8. Implementation handoff and acceptance examples
 
-After the booking sections are agreed, B implements B2.1/B2.2 in a new task branch, adds migrations and generated types, and publishes exact API fields, errors, status transitions, access rules and date examples. A integrates only after that contract merges; A can keep building its listing editor/management meanwhile.
+B implements the approved booking rules through B2.1/B2.2 in a new task branch, adds migrations and generated types, and publishes exact API fields, errors, status transitions, access rules and date examples. A integrates only after that contract merges; A can keep building its listing editor/management meanwhile.
 
 Required checks include: one-day and three-day totals; rejection of backwards/too-soon/overlong dates; adjacent versus overlapping reservations; self-booking and duplicate requests; exactly one winner under concurrent acceptance; stale holds; deadline boundary checks; immutable quotes after listing price changes; denied participant/outsider actions; and an overdue/disputed device remaining unavailable beyond its original dates.
 
-**Decision record:** booking sections 1–6 proposed; not yet confirmed. Section 7 pending. Record the agreed values, who confirmed them and the date here before implementation. Changing an agreed policy later requires a reviewed change, with existing booking snapshots preserved.
+**Decision record:** sections 1–6 approved for the demo by Person B (Angel) on 18 October 2026 in this chat; Person A's separate approval is not recorded. B2.1 is authorized. Section 7 remains pending, and payment/checklist/settlement transitions stay gated by their actual dependencies. See the [B2.1 implementation boundary](lib/bookings/README.md). Changing an agreed policy later requires a reviewed change, with existing booking snapshots preserved.

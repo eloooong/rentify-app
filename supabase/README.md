@@ -1,10 +1,10 @@
 # Rentify Supabase setup and contract
 
-## Current scope: B0.3–B0.4 and B1.1–B1.4
+## Current scope: B0.3–B0.4, B1.1–B1.4 and B2.1
 
 The initial migration creates 14 application tables, the `booking_status` enum, UUID keys, timestamps/update triggers, foreign keys, indexes, and basic integrity constraints. `profile_private` keeps phone/verification information separate from the future public profile surface.
 
-Every application table has RLS enabled. Categories allow public reads only. B1.2 adds an explicit public profile projection and owner-only name/phone edits; see the [profile contract](../lib/profiles/README.md). B1.3 adds [catalog APIs, category templates, listing/photo permissions, and a private image bucket](../lib/catalog/README.md). Other application tables still deny client access. Trusted server-side `service_role` access is granted explicitly; audit events permit only select/insert for that role. Booking/payment flows remain pending.
+Every application table has RLS enabled. Categories allow public reads only. B1.2 adds an explicit public profile projection and owner-only name/phone edits; see the [profile contract](../lib/profiles/README.md). B1.3 adds [catalog APIs, category templates, listing/photo permissions, and a private image bucket](../lib/catalog/README.md). B2.1 adds [booking duration/overlap safeguards and participant-only reads](../lib/bookings/README.md). Booking client writes and other unfinished application tables still deny client access. Trusted server-side `service_role` access is granted explicitly; audit events permit only select/insert for that role. Booking commands/payment flows remain pending.
 
 ## Local verification
 
@@ -75,29 +75,29 @@ The pgTAP fixtures/grants are enclosed in a rolled-back transaction. The tests e
 
 ## Contract for Person A
 
-| Entity                      | Important fields/constraints                                                                                                                                          |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`                  | `id` references Auth; `display_name`, `avatar_path`, protected `role` and `account_status`                                                                            |
-| `profile_private`           | One row per profile; `phone`, `phone_verified_at`; never include in public profile queries                                                                            |
-| `categories`                | `name`, `slug`, optional `parent_id`, JSON-object `attribute_schema`                                                                                                  |
-| `listings`                  | `owner_id`, `category_id`, `title`, `description`, `daily_price_amount`, `deposit_amount`, `currency`, `condition`, JSON-object `attributes`, `pickup_area`, `status` |
-| `listing_photos`            | `listing_id`, `storage_path`, zero-based `position`; unique position per listing                                                                                      |
-| `bookings`                  | `listing_id`, `owner_id`, `renter_id`, bounded/nonempty `rental_period`, `status`, `rental_amount`, `deposit_amount`, `currency`, JSON-object `cancellation_terms`    |
-| `payments`                  | `booking_id`, `type`, `amount`, `currency`, `status`, optional gateway references; no gateway integration yet                                                         |
-| `condition_reports`         | One per booking/stage; JSON-array `checklist`, `photo_paths`, notes, separate party-confirmation timestamps                                                           |
-| `conversations`, `messages` | One conversation per booking; messages have sender, body, and read timestamp                                                                                          |
-| `reviews`                   | `booking_id`, `author_id`, `subject_id`, rating 1–5; one review per booking/author; listing is derived through booking                                                |
-| `notifications`             | Recipient `user_id`, `type`, JSON-object `payload`, `read_at`                                                                                                         |
-| `reports`                   | Reporter, reason/evidence, status/resolution; exactly one listing, user, or booking target                                                                            |
-| `audit_log`                 | Optional actor, action, target table/ID, JSON-object details; append/read only for the server role                                                                    |
+| Entity                      | Important fields/constraints                                                                                                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`                  | `id` references Auth; `display_name`, `avatar_path`, protected `role` and `account_status`                                                                                                         |
+| `profile_private`           | One row per profile; `phone`, `phone_verified_at`; never include in public profile queries                                                                                                         |
+| `categories`                | `name`, `slug`, optional `parent_id`, JSON-object `attribute_schema`                                                                                                                               |
+| `listings`                  | `owner_id`, `category_id`, `title`, `description`, `daily_price_amount`, `deposit_amount`, `currency`, `condition`, JSON-object `attributes`, `pickup_area`, `status`                              |
+| `listing_photos`            | `listing_id`, `storage_path`, zero-based `position`; unique position per listing                                                                                                                   |
+| `bookings`                  | `listing_id`, `owner_id`, `renter_id`, bounded/nonempty `rental_period`, generated `rental_days` (1–30), `status`, `rental_amount`, `deposit_amount`, `currency`, JSON-object `cancellation_terms` |
+| `payments`                  | `booking_id`, `type`, `amount`, `currency`, `status`, optional gateway references; no gateway integration yet                                                                                      |
+| `condition_reports`         | One per booking/stage; JSON-array `checklist`, `photo_paths`, notes, separate party-confirmation timestamps                                                                                        |
+| `conversations`, `messages` | One conversation per booking; messages have sender, body, and read timestamp                                                                                                                       |
+| `reviews`                   | `booking_id`, `author_id`, `subject_id`, rating 1–5; one review per booking/author; listing is derived through booking                                                                             |
+| `notifications`             | Recipient `user_id`, `type`, JSON-object `payload`, `read_at`                                                                                                                                      |
+| `reports`                   | Reporter, reason/evidence, status/resolution; exactly one listing, user, or booking target                                                                                                         |
+| `audit_log`                 | Optional actor, action, target table/ID, JSON-object details; append/read only for the server role                                                                                                 |
 
 All money columns are **integer minor units**: `10000` means PHP 100.00 when currency is PHP. PHP is the plan's initial default; this does not select a gateway or settle deposit amounts. Avoid floating-point prices in API/database contracts.
 
-Booking states: `requested`, `accepted`, `declined`, `expired`, `cancelled`, `paid`, `handed_over`, `returned`, `completed`, `disputed`. This enum defines vocabulary only; allowed transitions/actors arrive in B2.2. The owner snapshot must match the listing owner, and owner/renter must differ. Overlap protection is not present yet (B2.1).
+Booking states: `requested`, `accepted`, `declined`, `expired`, `cancelled`, `paid`, `handed_over`, `returned`, `completed`, `disputed`. This enum defines vocabulary only; allowed transitions/actors arrive in B2.2. The owner snapshot must match the listing owner, and owner/renter must differ. B2.1 prevents overlapping reservations and duplicate open requests in PostgreSQL, including concurrent writes; see the [booking contract](../lib/bookings/README.md) for exact statuses and the remaining command-layer checks.
 
-PostgreSQL stores `daterange` canonically with an exclusive upper bound. UI date selection, billed-day semantics, booking windows, cancellations, and inspection timeouts still need agreement in `DECISIONS.md` before booking implementation. Do not infer billing rules from the range representation.
+PostgreSQL stores `daterange` canonically with an exclusive upper bound. Person B approved the demo booking rules in [DECISIONS.md](../DECISIONS.md), sections 1–6: both pickup and return dates count, so store `[pickup, return + 1 day)`. B2.1 generates `rental_days`; B2.2 must implement the approved booking windows, quote calculation, deadlines and transitions. Paid cancellation/refund rules and inspection/release timeouts remain pending; do not invent them from the range representation.
 
-**Integration gate:** Auth B1.1, profiles B1.2 and catalog/storage B1.3 are merged. Person A can connect listing/upload screens using the [catalog API and photo contract](../lib/catalog/README.md). Categories contain four read-only starter templates; B1.4's [local demo tooling](DEMO-DATA.md) supplies opt-in fixtures. Later tasks must add booking transitions/overlap checks, review eligibility, chat participant policies, Realtime publication, notifications, payment webhooks, and admin/dispute logic. Use agreed UI mocks until each handoff merges.
+**Integration gate:** Auth B1.1, profiles B1.2 and catalog/storage B1.3 are merged. Person A can connect listing/upload screens using the [catalog API and photo contract](../lib/catalog/README.md). Categories contain four read-only starter templates; B1.4's [local demo tooling](DEMO-DATA.md) supplies opt-in fixtures. B2.1 supplies structural booking safeguards and participant reads after its handoff merges; booking controls still wait for B2.2 commands. Later tasks must add transitions/expiry/availability, review eligibility, chat participant policies, Realtime publication, notifications, payment webhooks, and admin/dispute logic. Use agreed UI mocks until each handoff merges.
 
 ## Entity relationships
 

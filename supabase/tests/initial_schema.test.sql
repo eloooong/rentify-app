@@ -73,7 +73,7 @@ select is((select count(*) from public.listings where id = '30000000-0000-4000-8
 select is((select count(*) from public.profile_private), 0::bigint, 'RLS hides private phone data');
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
-select is((select count(*) from public.bookings), 0::bigint, 'Even owner access waits for participant policies');
+select is((select count(*) from public.bookings where id='40000000-0000-4000-8000-000000000001'), 1::bigint, 'B2.1 permits a participant to read their own fixture booking');
 select is((select count(*) from public.messages), 0::bigint, 'No premature chat access');
 select is((select count(*) from public.payments), 0::bigint, 'No premature payment access');
 select throws_ok(
