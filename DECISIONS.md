@@ -1,6 +1,6 @@
 # Rentify product decisions
 
-**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 are merged. B2.3/B2.4 implementation and provider verification remain pending. Choices are not completed behavior. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
+**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 are merged. B2.3 backend implementation is in review with external verification pending; B2.4 remains unimplemented. Choices are not completed behavior. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
 
 ## 1. First release
 
@@ -136,7 +136,7 @@ Verify the raw-body signature before processing; require the test signature and 
 
 - **Selected:** gateway/method, immediate test charge, existing deposit snapshot, fee treatment, pre-pickup full refund, late-payment handling and no automatic deductions/releases.
 - **Not configured:** no PayMongo setting was found in standard local environment files. Account ownership, test keys, enabled GCash, HTTPS webhook delivery and actual refund behavior remain unverified. Never paste secrets into chat or commits.
-- **Next B work:** B2.3 implements the adapter, ledger, checkout, signed webhooks and reconciliation; B2.4 implements refunds. Deterministic tests can proceed without credentials, but mocks do not complete external verification.
+- **Implementation:** B2.3's [payment contract](lib/payments/README.md) and backend are implemented on `codex/payment-backend`, pending review/merge and provider checks. Person B confirmed there is no PayMongo account yet. B2.4/refund execution remains separate. Deterministic tests do not complete external verification.
 - **A wait:** real checkout waits for B's published API contract and merged backend. A2.1/A2.2 may use merged B2.2 APIs now. A retains listing/chat/frontend ownership.
 - **Still pending before live use:** marketplace/custody approval, payout arrangements, dispute authority/evidence/appeals, retention/privacy and deployment readiness. Demo defaults do not settle live policies.
 
@@ -148,4 +148,4 @@ Required booking regression checks include: one-day and three-day totals; reject
 
 B2.3/B2.4 checks must cover exact totals, concurrent checkout retries, invalid signatures/live events, duplicate/out-of-order/missed events, cancellation/payment races, late-payment refunds, full/partial refund retries, failed refunds and outsider denial. Verify actual GCash test checkout, signed delivery, session expiry and refunds before claiming the external integration works. Publish exact API/ledger/error contracts before A connects checkout.
 
-**Decision record:** sections 1–6 approved directly by Person B (Angel); section 7 selected under Person B's explicit delegation on 18 October 2026. Person A's separate approval is not recorded. B2.1/B2.2 are merged; B2.3/B2.4 remain unimplemented. Controls stay gated by dependencies and verification. Section 7 supersedes older policy-pending notes for these demo choices; the [B2.2 contract](lib/bookings/README.md) remains the boundary of implemented behavior. Reviewed policy changes must preserve existing booking snapshots.
+**Decision record:** sections 1–6 approved directly by Person B (Angel); section 7 selected under Person B's explicit delegation on 18 October 2026. Person A's separate approval is not recorded. B2.1/B2.2 are merged; B2.3 backend is implemented in its review branch with external checks pending; B2.4/refunds remain unimplemented. Controls stay gated by dependencies and verification. Section 7 supersedes older policy-pending notes; the [booking](lib/bookings/README.md) and [payment](lib/payments/README.md) contracts distinguish implemented behavior from external verification. Reviewed policy changes must preserve existing booking snapshots.
