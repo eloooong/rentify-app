@@ -31,31 +31,36 @@ if (
     "Use the canonical HTTPS app origin or local development origin.",
   );
 do {
-  try {
-    const response = await fetch(new URL("/api/payments/reconcile", origin), {
-      method: "POST",
-      redirect: "error",
-      signal: AbortSignal.timeout(45_000),
-      headers: { Authorization: `Bearer ${secret}` },
-    });
-    if (!response.ok)
-      throw new Error(
-        "Payment reconciliation is unavailable; check server configuration.",
+  const paths = ["/api/payments/reconcile"];
+  if (process.env.RENTIFY_REFUNDS_ENABLED === "true")
+    paths.push("/api/payments/refunds/reconcile");
+  for (const path of paths) {
+    try {
+      const response = await fetch(new URL(path, origin), {
+        method: "POST",
+        redirect: "error",
+        signal: AbortSignal.timeout(45_000),
+        headers: { Authorization: `Bearer ${secret}` },
+      });
+      if (!response.ok)
+        throw new Error(
+          "Payment reconciliation is unavailable; check server configuration.",
+        );
+      const result = await response.json();
+      if (
+        !Number.isInteger(result.claimed) ||
+        !Number.isInteger(result.completed)
+      )
+        throw new Error("Unexpected reconciliation response.");
+      console.log(
+        `${path.includes("/refunds/") ? "Refund" : "Payment"} work: ${result.claimed} claimed, ${result.completed} completed.`,
       );
-    const result = await response.json();
-    if (
-      !Number.isInteger(result.claimed) ||
-      !Number.isInteger(result.completed)
-    )
-      throw new Error("Unexpected reconciliation response.");
-    console.log(
-      `Payment work: ${result.claimed} claimed, ${result.completed} completed.`,
-    );
-  } catch {
-    console.error(
-      "Payment reconciliation did not complete. Durable work remains queued; no credentials or provider response were logged.",
-    );
-    if (!args.includes("--loop")) process.exitCode = 1;
+    } catch {
+      console.error(
+        "Payment reconciliation did not complete. Durable work remains queued; no credentials or provider response were logged.",
+      );
+      if (!args.includes("--loop")) process.exitCode = 1;
+    }
   }
   if (!args.includes("--loop")) break;
   await delay(5_000);

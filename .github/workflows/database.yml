@@ -95,6 +95,8 @@ jobs:
         run: npm run db:test:bookings
       - name: Test payment consent, privacy, provider receipts, and terminal races
         run: npm run db:test:payments
+      - name: Test paid cancellations, refund reservations, retries and worker races
+        run: npm run db:test:refunds
       - name: Test local demo seed, preservation, privacy, and scoped reset
         run: npm run db:demo:test
       - name: Test real HTTP access and Server Component client
@@ -132,6 +134,8 @@ jobs:
         run: npm run test:bookings:http
       - name: Test private payment HTTP routes and forged-request denial
         run: npm run test:payments:http
+      - name: Test paid cancellation and private refund HTTP routes
+        run: npm run test:refunds:http
       - name: Stop auth journey app
         if: always()
         run: |

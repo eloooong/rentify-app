@@ -87,6 +87,10 @@ export async function withBookingFixtures(run) {
       // before using the Storage API cleanup; real immutable audit history is untouched.
       sql(`begin; set local lock_timeout='10s';
         select id from public.listings where id in (${ids}) and owner_id='${owner}' order by id for update;
+        delete from public.audit_log where target_table='refund_attempts' and target_id in
+          (select f.id from public.refund_attempts f join public.payment_receipts r on r.id=f.receipt_id join public.checkout_attempts a on a.id=r.attempt_id join public.bookings b on b.id=a.booking_id where b.owner_id='${owner}' and b.listing_id in (${ids}));
+        delete from public.refund_attempts where receipt_id in
+          (select r.id from public.payment_receipts r join public.checkout_attempts a on a.id=r.attempt_id join public.bookings b on b.id=a.booking_id where b.owner_id='${owner}' and b.listing_id in (${ids}));
         delete from public.audit_log where
           (target_table='checkout_attempts' and target_id in (select a.id from public.checkout_attempts a join public.bookings b on b.id=a.booking_id where b.owner_id='${owner}' and b.listing_id in (${ids}))) or
           (target_table='payment_receipts' and target_id in (select r.id from public.payment_receipts r join public.checkout_attempts a on a.id=r.attempt_id join public.bookings b on b.id=a.booking_id where b.owner_id='${owner}' and b.listing_id in (${ids})));

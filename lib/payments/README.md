@@ -1,6 +1,6 @@
 # B2.3 payment backend — test integration, external verification pending
 
-Person B owns the payment API, provider adapter, migrations/types and reconciliation runner. [DECISIONS.md section 7](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo) selects PayMongo Hosted Checkout v2 with GCash, fictional inventory, immutable rent/deposit quotes and test money only. Person B explicitly requested implementation with **no PayMongo account yet**. Local tests do not establish provider activation or end-to-end success.
+Person B owns the payment API, provider adapter, migrations/types and reconciliation runner. B2.3 merged in [PR #36](https://github.com/eloooong/rentify-app/pull/36); B2.4's [paid cancellation/refund extension](REFUNDS.md) is implemented in its separate review branch. [DECISIONS.md section 7](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo) selects PayMongo Hosted Checkout v2 with GCash, fictional inventory, immutable rent/deposit quotes and test money only. Person B explicitly requested implementation with **no PayMongo account yet**. Local tests do not establish provider activation or end-to-end success.
 
 ## Contract for Person A
 
@@ -48,7 +48,7 @@ There is one attempt per booking. Concurrent POSTs reuse it. Provider creation u
 
 Receipts are unique by provider payment ID. A receipt may allocate rent and deposit once each in `payments`; summing receipt amounts and allocation rows together would double-count. `succeeded` allocation rows mean captured test funds, not earned income or payout eligibility. Incorrect amount/currency/method/time evidence is retained for review without creating a false quote allocation or marking a booking paid. Duplicate deliveries cannot duplicate receipts, allocations or audits. Unknown session references and unexpected alternative sessions are quarantined in the inbox for operator review, not treated as an authorized payment.
 
-Synchronization locks the listing, then booking, then attempt. It rechecks eligibility/physical readiness and deadlines. Only a matching test payment confirmed while the server deadline is open can move `accepted -> paid`. If cancellation/expiry wins, the booking stays terminal and the receipt becomes `refund_due`. A delayed callback cannot revive it. B2.4 must implement fulfillment of this obligation; this handoff exposes no refund execution API. No handover, return, completion, deposit-release or owner-payout transition is added.
+Synchronization locks the listing, then booking, then attempt. It rechecks eligibility/physical readiness and deadlines. Only a matching test payment confirmed while the server deadline is open can move `accepted -> paid`. If cancellation/expiry wins, the booking stays terminal and the receipt becomes `refund_due`. A delayed callback cannot revive it. B2.4's [separate refund ledger/worker](REFUNDS.md) handles this obligation behind a separate opt-in; confirmed successful refunds reduce the DTO's `refund_due_amount`. No handover, return, completion, deposit-release or owner-payout transition is added.
 
 ## Webhooks and reconciliation
 
@@ -70,7 +70,7 @@ All new names have placeholders in [.env.example](../../.env.example). Save real
 - `SUPABASE_SERVICE_ROLE_KEY`: privileged server-only Supabase credential for durable payment processing.
 - `PAYMENTS_WORKER_SECRET`: random server-to-server bearer secret, at least 32 characters.
 
-No new dependency is installed. With no PayMongo account, leave payments disabled. Authenticated status reads and database/unit tests still work; no public payment-simulation route exists.
+No new dependency is installed. With no PayMongo account, leave payments disabled. B2.4 also requires `RENTIFY_REFUNDS_ENABLED=true` for its separate refund worker; leave that disabled until verified. Authenticated status reads and database/unit tests still work; no public payment-simulation route exists.
 
 After configuring a test account, an HTTPS webhook endpoint and the running app:
 
@@ -97,6 +97,6 @@ npm run test:payments:http
 
 SQL tests cover grants/RLS/private functions. Real Auth tests exercise consent, concurrent attempt creation, private status, leased workers, duplicate events/receipts/allocations, live evidence rejection, amount mismatch, late expiry and payment/cancellation races. Unit tests inject a provider transport; they do not contact PayMongo. HTTP tests use actual SSR cookies for private reads, mass-assignment/origin rejection and forged webhook/worker denial. Scoped fixture cleanup removes only its own accounts/listings/uploads/bookings/payment/audit records, preserving development data.
 
-**External checks still pending:** account/test GCash availability; exact v2 create/v1 retrieve/expire compatibility and idempotency behavior; actual signed webhook envelope/header; HTTPS round trip; full/partial test refunds; real worker/scheduler configuration. Official examples differ on event envelopes/signature simplification, so the pinned adapter must be checked against genuine test deliveries before claiming end-to-end integration. Do not weaken validation or switch to live mode to bypass an unsupported test feature. B2.3 stays unchecked in the project checklist until its acceptance gates are met; B2.4/refunds and B3.3/settlement stay separate.
+**External checks still pending:** account/test GCash availability; exact v2 create/v1 retrieve/expire compatibility and idempotency behavior; actual signed webhook envelope/header; HTTPS round trip; full/partial test refunds; real worker/scheduler configuration. Official examples differ on event envelopes/signature simplification, so the pinned adapter must be checked against genuine test deliveries before claiming end-to-end integration. Do not weaken validation or switch to live mode to bypass an unsupported test feature. B2.3 stays unchecked in the project checklist until its acceptance gates are met; [B2.4's refund handoff and verification gates](REFUNDS.md) and B3.3/settlement stay separate.
 
 Primary references: [Hosted Checkout](https://docs.paymongo.com/docs/payment-channels-hosted-checkout), [test quick start](https://docs.paymongo.com/docs/payment-channels-hosted-checkout-quick-start), [get session](https://docs.paymongo.com/reference/get_checkout_sessions), [expire session](https://docs.paymongo.com/reference/expire-a-checkout-session), [checkout lifecycle](https://docs.paymongo.com/docs/payment-channels-key-concepts), [detailed webhook verification](https://docs.paymongo.com/docs/developer-tools-webhook-setup-management), [refund resource](https://docs.paymongo.com/reference/refund-resource).

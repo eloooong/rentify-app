@@ -75,8 +75,9 @@ export type Database = {
           status_reason: string | null;
           updated_at: string;
           booking_payload: Json | null;
+          refund_payload: Json | null;
         };
-        ComputedFields: "booking_payload";
+        ComputedFields: "booking_payload" | "refund_payload";
         Insert: {
           accepted_at?: string | null;
           cancellation_terms?: NonNullable<Json>;
@@ -748,6 +749,63 @@ export type Database = {
         };
         Relationships: [];
       };
+      refund_attempts: {
+        Row: {
+          amount: number;
+          created_at: string;
+          creation_started_at: string | null;
+          generation: number;
+          id: string;
+          last_error_code: string | null;
+          lease_token: string | null;
+          lease_until: string | null;
+          next_check_at: string | null;
+          provider_refund_id: string | null;
+          receipt_id: string;
+          state: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          created_at?: string;
+          creation_started_at?: string | null;
+          generation: number;
+          id?: string;
+          last_error_code?: string | null;
+          lease_token?: string | null;
+          lease_until?: string | null;
+          next_check_at?: string | null;
+          provider_refund_id?: string | null;
+          receipt_id: string;
+          state?: string;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          creation_started_at?: string | null;
+          generation?: number;
+          id?: string;
+          last_error_code?: string | null;
+          lease_token?: string | null;
+          lease_until?: string | null;
+          next_check_at?: string | null;
+          provider_refund_id?: string | null;
+          receipt_id?: string;
+          state?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "refund_attempts_receipt_id_fkey";
+            columns: ["receipt_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_receipts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       reports: {
         Row: {
           booking_id: string | null;
@@ -937,6 +995,10 @@ export type Database = {
         Args: { object_name: string };
         Returns: boolean;
       };
+      cancel_paid_booking: {
+        Args: { p_booking: string; p_reason: string };
+        Returns: Json;
+      };
       checkout_can_pay: { Args: { p_booking: string }; Returns: boolean };
       checkout_payload: {
         Args: {
@@ -977,6 +1039,19 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      claim_refund_work: {
+        Args: { p_refund?: string };
+        Returns: {
+          amount: number;
+          creation_started_at: string;
+          id: string;
+          lease_token: string;
+          paid_at: string;
+          payment_id: string;
+          provider_refund_id: string;
+          receipt_id: string;
+        }[];
+      };
       enqueue_payment_event: {
         Args: {
           p_event: string;
@@ -995,7 +1070,12 @@ export type Database = {
         Args: { p_attempt: string; p_code: string; p_lease: string };
         Returns: undefined;
       };
+      fail_refund_work: {
+        Args: { p_code: string; p_lease: string; p_refund: string };
+        Returns: undefined;
+      };
       get_booking: { Args: { p_booking: string }; Returns: Json };
+      get_booking_refunds: { Args: { p_booking: string }; Returns: Json };
       get_checkout: { Args: { p_booking: string }; Returns: Json };
       is_public_listing: { Args: { listing: string }; Returns: boolean };
       list_my_bookings: {
@@ -1007,8 +1087,29 @@ export type Database = {
         };
         Returns: Json;
       };
+      paid_cancellation_allowed: {
+        Args: {
+          actor: string;
+          at_time: string;
+          b: Omit<
+            Database["public"]["Tables"]["bookings"]["Row"],
+            Database["public"]["Tables"]["bookings"]["ComputedFields"]
+          >;
+        };
+        Returns: boolean;
+      };
       prepare_checkout: {
         Args: { p_booking: string; p_policy: string };
+        Returns: Json;
+      };
+      queue_receipt_refund: { Args: { p_receipt: string }; Returns: undefined };
+      refund_payload: {
+        Args: {
+          b: Omit<
+            Database["public"]["Tables"]["bookings"]["Row"],
+            Database["public"]["Tables"]["bookings"]["ComputedFields"]
+          >;
+        };
         Returns: Json;
       };
       request_booking: {
@@ -1028,8 +1129,16 @@ export type Database = {
         Args: { p_attempt: string; p_lease: string };
         Returns: undefined;
       };
+      start_refund_creation: {
+        Args: { p_lease: string; p_refund: string };
+        Returns: undefined;
+      };
       sync_checkout: {
         Args: { p_attempt: string; p_lease: string; p_snapshot: Json };
+        Returns: string;
+      };
+      sync_refund: {
+        Args: { p_lease: string; p_refund: string; p_snapshot: Json };
         Returns: string;
       };
       valid_catalog_attributes: {
