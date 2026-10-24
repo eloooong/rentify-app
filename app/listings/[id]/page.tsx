@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookingPanel } from "@/components/bookings/booking-panel";
+import { getSignedInUser } from "@/components/layout/get-signed-in-user";
 import { OwnerCard } from "@/components/listings/owner-card";
 import { PhotoGallery } from "@/components/listings/photo-gallery";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { getAppOrigin } from "@/lib/auth/config";
 import { getPublicListing } from "@/lib/listings/detail";
 import { formatMoney } from "@/lib/listings/format";
@@ -59,7 +60,10 @@ export default async function ListingDetailPage(
   props: PageProps<"/listings/[id]">,
 ) {
   const { id } = await props.params;
-  const listing = await getPublicListing(id);
+  const [listing, user] = await Promise.all([
+    getPublicListing(id),
+    getSignedInUser(),
+  ]);
   if (!listing) notFound();
 
   const specs = buildSpecs(
@@ -113,7 +117,7 @@ export default async function ListingDetailPage(
             className="flex flex-col gap-3 rounded-lg border border-border p-4"
           >
             <h2 id="price-heading" className="sr-only">
-              Price
+              Price and booking
             </h2>
             <p>
               <span className="text-3xl font-semibold text-fg">
@@ -127,15 +131,14 @@ export default async function ListingDetailPage(
                 {formatMoney(listing.deposit_amount, currency)}
               </span>
             </p>
-            <div className="rounded-md bg-surface-muted p-3 text-sm">
-              Availability and booking requests open in a later release.
-            </div>
-            <Button disabled aria-describedby="booking-note" className="w-full">
-              Request to book
-            </Button>
-            <p id="booking-note" className="text-xs text-muted-foreground">
-              Booking isn&apos;t available yet.
-            </p>
+            <BookingPanel
+              listingId={listing.id}
+              dailyPrice={listing.daily_price_amount}
+              deposit={listing.deposit_amount}
+              currency={currency}
+              signedIn={Boolean(user)}
+              isOwner={user?.id === listing.owner_id}
+            />
           </section>
 
           <OwnerCard owner={listing.owner} />
