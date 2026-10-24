@@ -163,6 +163,12 @@ export function BookingPanel({
             accept.
           </p>
         )}
+        <Link
+          href={`/bookings/${booking.id}`}
+          className="w-fit font-medium text-brand-strong underline underline-offset-2"
+        >
+          View your request
+        </Link>
       </div>
     );
   }
