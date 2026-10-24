@@ -5,6 +5,7 @@ import { getSignedInUser } from "./get-signed-in-user";
 import { NavLink } from "./nav-link";
 import {
   accountLink,
+  bookingsLink,
   lendLink,
   myListingsLink,
   primaryLinks,
@@ -31,6 +32,7 @@ export async function SiteHeader() {
           signIn={signInLink}
           account={accountLink}
           myListings={myListingsLink}
+          bookings={bookingsLink}
           lend={lendLink}
         />
 
@@ -72,6 +74,7 @@ export async function SiteHeader() {
           ))}
           {user ? (
             <>
+              <NavLink href={bookingsLink.href}>{bookingsLink.label}</NavLink>
               <NavLink href={myListingsLink.href}>
                 {myListingsLink.label}
               </NavLink>
