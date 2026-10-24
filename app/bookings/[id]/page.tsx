@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { BookingActions } from "@/components/bookings/booking-actions";
 import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
+import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
 import { formatDate } from "@/lib/listings/booking-dates";
 import {
@@ -93,11 +94,14 @@ export default async function BookingDetailPage(
             {booking.status_reason}
           </p>
         )}
-        {status === "accepted" && !owner && (
-          <p className="rounded-md bg-surface-muted p-3 text-sm">
-            Online checkout isn&apos;t available yet. It opens in a later
-            release.
-          </p>
+        {!owner && (status === "accepted" || status === "paid") && (
+          <Button asChild className="w-full sm:w-fit">
+            <Link href={`/checkout/${booking.id}`}>
+              {status === "accepted"
+                ? `Pay ${money(booking.total_amount)}`
+                : "View payment"}
+            </Link>
+          </Button>
         )}
         <BookingActions
           bookingId={booking.id}
