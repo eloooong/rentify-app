@@ -5,6 +5,7 @@ import {
   bookingSchema,
   type Booking,
 } from "@/lib/bookings/validation";
+import { checkoutStatus, type CheckoutStatus } from "@/lib/payments/validation";
 import { createClient } from "@/lib/supabase/server";
 import {
   BOOKINGS_PAGE_SIZE,
@@ -132,4 +133,20 @@ export async function getMyBooking(
   if (!booking.success) throw new Error("Unexpected booking response.");
   const [detailed] = await withDetails(client, userId, [booking.data]);
   return detailed;
+}
+
+/**
+ * The booking's checkout attempt (one per booking), or null before checkout
+ * starts. Uses B's get_checkout RPC, the same call as
+ * GET /api/bookings/:id/checkout (lib/payments/README.md).
+ */
+export async function getMyCheckout(
+  id: string,
+): Promise<CheckoutStatus | null> {
+  const client = await createClient();
+  const { data, error } = await client.rpc("get_checkout", { p_booking: id });
+  if (error) throw new Error("Unable to load the payment status.");
+  const status = checkoutStatus.nullable().safeParse(data);
+  if (!status.success) throw new Error("Unexpected payment status response.");
+  return status.data;
 }
