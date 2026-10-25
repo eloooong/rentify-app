@@ -135,9 +135,9 @@ Authenticate Xendit callbacks with the secret `x-callback-token`, validate resou
 ### Remaining implementation gates
 
 - **Selected:** gateway/method, immediate test charge, existing deposit snapshot, fee treatment, pre-pickup full refund, late-payment handling and no automatic deductions/releases.
-- **External setup:** Money-in permissions, callback token, temporary HTTPS origin, genuine GCash sandbox checkout/completed delivery, worker reconciliation, unpaid cancellation and full refund verified locally. Partial-refund and remaining external gates are still pending; secrets stay in ignored local files.
+- **External setup:** Money-in permissions, callback token, temporary HTTPS origin, genuine GCash sandbox checkout/completed delivery, worker reconciliation, unpaid cancellation and full refund verified locally. Full and partial refund capability passed; remaining external gates are still pending; secrets stay in ignored local files.
 - **Implementation:** checkout/refund backends merged in PR #36/#38; PR #43 merged Xendit provider isolation. Local test flags were enabled for controlled verification; environment defaults stay false.
-- **A handoff:** merged contracts and Xendit wording are available. A can connect paid cancellation and test checkout with B's running local HTTPS app and worker. A retains frontend ownership.
+- **A handoff:** merged contracts and Xendit wording are available. A can connect paid cancellation; test checkout must wait for a new HTTPS origin, callbacks and worker. A retains frontend ownership.
 - **Still pending before live use:** marketplace/custody approval, payout arrangements, dispute authority/evidence/appeals, retention/privacy and deployment readiness. Demo defaults do not settle live policies.
 
 ## 8. Implementation handoff and acceptance examples
@@ -160,8 +160,10 @@ On 25 October 2026, B verified the actual Xendit Test Mode account:
 - Authenticated paid cancellation recorded the PHP 4,250 obligation. The refund worker submitted once, observed pending, then confirmed succeeded through authenticated reads. Private status reported 425,000 centavos refunded and zero outstanding.
 - A separate genuine unpaid session was cancelled through the app. The worker retrieved Xendit status CANCELED and persisted checkout state expired without a receipt.
 
-Payments/refunds were enabled in ignored local configuration for controlled Test Mode verification. A temporary Cloudflare Quick Tunnel supplies HTTPS; it works only while the tunnel and app process run. Replacing it requires updating both Xendit callbacks, the app/return origins, then rebuilding and restarting. Persistent hosting and scheduling remain unconfigured.
+The temporary Cloudflare Quick Tunnel used for verification has stopped. Its two test callback URLs were removed, local app origin was restored to http://localhost:3000, and both local payment execution flags were returned to false. Test keys and verification token remain in ignored configuration. A new stable HTTPS origin, registered callbacks and a running worker are required before re-enabling checkout/refunds.
 
-Partial-refund capability, genuine expired-event delivery, provider failure/unknown-outcome scenarios and durable hosted worker operation remain unverified. The additional PHP 100 sandbox request for partial-refund testing awaits hosted test authorization; the documented API simulation did not complete it. Keep B2.3/B2.4 unchecked until remaining gates pass. No live money, owner payout or deposit settlement is enabled.
+A separate PHP 100 GCash Test Mode payment completed through Xendit's hosted eWallet simulator. The production refund adapter submitted PHP 25 and, only after authenticated success, the remaining PHP 75. Both moved from pending to succeeded; authenticated list and individual retrieval matched references and amounts, and the total exactly equaled the PHP 100 capture. This is gateway capability verification; the public app still creates full remaining refunds only, and its partial-ledger regression remains synthetic.
+
+Genuine expired-event delivery, provider failure/unknown-outcome scenarios and durable hosted worker operation remain unverified. Keep B2.3/B2.4 unchecked until remaining gates pass. No live money, owner payout or deposit settlement is enabled.
 
 Existing PayMongo records retain their identity and are excluded from Xendit workers; legacy obligations require provider-specific review. The consent version describes unchanged financial rules, with provider identity stored on new attempts.
