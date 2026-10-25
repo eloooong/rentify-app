@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { BookingActions } from "@/components/bookings/booking-actions";
 import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
+import { PaidCancellation } from "@/components/bookings/paid-cancellation";
+import { RefundStatusPanel } from "@/components/bookings/refund-status";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
 import { formatDate } from "@/lib/listings/booking-dates";
@@ -13,8 +15,13 @@ import {
   formatManilaTime,
   statusHint,
 } from "@/lib/listings/booking-status";
-import { getMyBooking } from "@/lib/listings/bookings";
+import { getMyBooking, getMyRefunds } from "@/lib/listings/bookings";
 import { formatMoney } from "@/lib/listings/format";
+import {
+  paidCancellation,
+  paidCancellationNote,
+  refundView,
+} from "@/lib/listings/refunds";
 
 export const metadata: Metadata = {
   title: "Booking | Rentify",
@@ -38,11 +45,15 @@ export default async function BookingDetailPage(
   const user = await requireUser(returnTo);
   const booking = await getMyBooking(user.id, id);
   if (!booking) notFound();
+  // The page still works without refund status; it says so instead.
+  const refunds = await getMyRefunds(id).catch(() => null);
 
   const status = displayStatus(booking);
   const owner = booking.role === "owner";
   const title = booking.listing?.title ?? "Listing unavailable";
   const money = (amount: number) => formatMoney(amount, booking.currency);
+  const cancellation = paidCancellation(booking, refunds, new Date());
+  const refund = refunds && refundView(refunds, booking.role);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
@@ -108,7 +119,27 @@ export default async function BookingDetailPage(
           actions={booking.allowed_actions}
           returnTo={returnTo}
         />
+        <PaidCancellation
+          available={cancellation?.kind === "open"}
+          bookingId={booking.id}
+          role={booking.role}
+          total={booking.total_amount}
+          returnTo={returnTo}
+        />
+        {cancellation && (
+          <p className="text-sm text-muted-foreground">
+            {paidCancellationNote(cancellation)}
+          </p>
+        )}
+        {!refunds && (
+          <p role="status" className="text-sm text-muted-foreground">
+            We couldn&apos;t load the refund status. Refresh the page to try
+            again.
+          </p>
+        )}
       </section>
+
+      {refund && <RefundStatusPanel view={refund} />}
 
       <section aria-labelledby="details-heading">
         <h2 id="details-heading" className="text-lg font-semibold text-fg">

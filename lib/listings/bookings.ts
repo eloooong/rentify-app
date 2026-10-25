@@ -5,6 +5,10 @@ import {
   bookingSchema,
   type Booking,
 } from "@/lib/bookings/validation";
+import {
+  refundStatus,
+  type RefundStatus,
+} from "@/lib/payments/refund-validation";
 import { checkoutStatus, type CheckoutStatus } from "@/lib/payments/validation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -148,5 +152,21 @@ export async function getMyCheckout(
   if (error) throw new Error("Unable to load the payment status.");
   const status = checkoutStatus.nullable().safeParse(data);
   if (!status.success) throw new Error("Unexpected payment status response.");
+  return status.data;
+}
+
+/**
+ * The booking's refund status and whether this participant may cancel it
+ * as a paid booking now. Uses B's get_booking_refunds RPC, the same call as
+ * GET /api/bookings/:id/refunds (lib/payments/REFUNDS.md).
+ */
+export async function getMyRefunds(id: string): Promise<RefundStatus> {
+  const client = await createClient();
+  const { data, error } = await client.rpc("get_booking_refunds", {
+    p_booking: id,
+  });
+  if (error) throw new Error("Unable to load the refund status.");
+  const status = refundStatus.safeParse(data);
+  if (!status.success) throw new Error("Unexpected refund status response.");
   return status.data;
 }
