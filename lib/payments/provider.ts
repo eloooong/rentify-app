@@ -92,6 +92,7 @@ export function normalizeSession(value: unknown): Snapshot {
 }
 export type CheckoutInput = {
   id: string;
+  booking_id: string;
   rental_amount: number;
   deposit_amount: number;
 };
@@ -132,6 +133,7 @@ export function paymongoProvider(
   }
   return {
     async create(input, origin) {
+      const returnUrl = `${origin}/checkout/${z.uuid().parse(input.booking_id)}`;
       const items = [
         {
           name: "Demo rental",
@@ -156,8 +158,8 @@ export function paymongoProvider(
                 line_items: items,
                 payment_method_types: ["gcash"],
                 reference_number: input.id,
-                success_url: `${origin}/account`,
-                cancel_url: `${origin}/account`,
+                success_url: returnUrl,
+                cancel_url: returnUrl,
                 send_email_receipt: false,
                 pass_on_fees: false,
                 metadata: {

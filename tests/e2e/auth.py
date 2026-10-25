@@ -222,6 +222,27 @@ def run():
         phase = "catalog and storage permissions"
         run_catalog(one, two, guest, args.base_url, api_url, status, session_cookies(one)[1]["access_token"], session_cookies(two)[1]["access_token"])
 
+        phase = "public listing and checkout sign-in returns"
+        assert guest.request.get(args.base_url + "/listings", max_redirects=0).status == 200
+        # Missing UUIDs also exercise a real 404 after sign-in without creating bookings.
+        missing_id = str(uuid.uuid4())
+        for destination in ("/listings?q=camera&sort=price_asc", "/listings/" + missing_id, "/checkout/" + missing_id):
+            return_context = browser.new_context()
+            try:
+                return_page = return_context.new_page()
+                return_page.goto(args.base_url + "/login?" + urllib.parse.urlencode({"next": destination}))
+                return_page.wait_for_load_state("networkidle")
+                return_page.get_by_label("Email address", exact=True).fill(email_one)
+                return_page.get_by_label("Password", exact=True).fill(password)
+                return_page.get_by_role("button", name="Sign in", exact=True).click()
+                expect(return_page).to_have_url(args.base_url + destination)
+                assert session_cookies(return_context)[1]["user"]["id"] == owner_id
+                if destination.startswith(("/listings/", "/checkout/")):
+                    assert return_context.request.get(args.base_url + destination).status == 404
+            finally:
+                return_context.close()
+        print("Public listings stay public; real sign-in preserves listing and checkout destinations: PASS", flush=True)
+
         phase = "forged cookie rejection"
         cookies, session = session_cookies(one)
         session["access_token"] = "invalid.signature.value"

@@ -4,7 +4,7 @@ Email/password auth uses server actions, Supabase SSR, and Next.js 16's `proxy.t
 
 | Route                  | Contract                                                                                        |
 | ---------------------- | ----------------------------------------------------------------------------------------------- |
-| `/login?next=/account` | Sign in; `next` accepts local protected paths only, defaulting to `/account`.                   |
+| `/login?next=/account` | Sign in; `next` accepts local protected paths and `/listings` paths, defaulting to `/account`.  |
 | `/signup`              | Email/password signup; verify the email before sign-in.                                         |
 | `/verify-email`        | Resend signup verification with a generic account-status response.                              |
 | `/forgot-password`     | Request recovery with a generic account-status response.                                        |
@@ -23,6 +23,8 @@ Actions in `app/(auth)/actions.ts`: `signIn`, `signUp`, `requestPasswordReset`, 
 Protected page roots: `/account`, `/update-password`, `/owner`, `/bookings`, `/checkout`, `/messages`, `/admin`, `/checklists`; matching uses whole segments. Future actions/APIs must **also** authenticate and enforce feature permissions server-side. The proxy does not replace RLS/ownership checks. Administration returns 403 until a trusted role lookup and admin permissions exist; metadata cannot grant access. A's header/listing files are unchanged.
 
 ## Sessions and limits
+
+Sign-in and callback return paths may also target `/listings` or its descendants, including their search parameters. This allows a renter to return to a listing after signing in without making public browse/detail pages protected. External URLs, route-prefix lookalikes, encoded backslashes/control characters and unsupported routes still fall back to `/account`.
 
 - Proxy verifies with `getUser()` and refreshes both request and response cookies. Invalid/unverified sessions redirect to login. Provider outages fail closed with 503 on protected pages.
 - Auth/session responses are private/no-store. Callback redirects retain SDK cookies/cache headers and strip codes/hashes from the destination URL. SameSite=Lax; Secure cookies when the canonical app origin is HTTPS. Session cookies remain readable by Supabase's browser SDK.
@@ -49,7 +51,7 @@ Hosted projects must separately configure the canonical HTTPS Site URL, allowlis
 
 Unit tests cover input/redirect validation, generic provider failures, verified identity, outages, forged cookies, cookie forwarding/write failures, cache headers, OTP/PKCE errors, and premature admin access. B1.2 adds profile actions, validation, SQL permissions, and browser checks; see its contract for the public/private projection.
 
-The real browser journey creates two random local `@example.test` users and removes only those Auth fixtures. It tests signup, denied unverified login, email confirmation/replay, real refresh-token rotation, two-user isolation, 375px layout, forged cookie/admin denial, recovery in another browser, mismatch/old/new password behavior, and logout. Its local admin key stays only in the Python process for cleanup, never logs/files/browser code. Mailpit retains fixture emails after their accounts are removed. Non-local app/API/inbox hosts are rejected.
+The real browser journey creates two random local `@example.test` users and removes only those Auth fixtures. It tests signup, denied unverified login, email confirmation/replay, real refresh-token rotation, two-user isolation, listing/checkout sign-in return paths, 375px layout, forged cookie/admin denial, recovery in another browser, mismatch/old/new password behavior, and logout. Its local admin key stays only in the Python process for cleanup, never logs/files/browser code. Mailpit retains fixture emails after their accounts are removed. Non-local app/API/inbox hosts are rejected.
 
 ```sh
 C:/Users/angel/.codex/tools/webapp-testing/Scripts/python.exe tests/e2e/auth.py --browser-channel msedge

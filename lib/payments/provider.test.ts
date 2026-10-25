@@ -1,6 +1,7 @@
 import { expect, it, vi } from "vitest";
 import { normalizeSession, paymongoProvider } from "./provider";
 const id = "a1000000-0000-4000-8000-000000000001";
+const bookingId = "a1000000-0000-4000-8000-000000000002";
 function response() {
   return {
     data: {
@@ -21,7 +22,12 @@ it("creates only GCash test checkout with fixed totals, no fees and stable idemp
     .fn<typeof fetch>()
     .mockImplementation(async () => Response.json(response()));
   const gateway = paymongoProvider("sk_test_unit", send);
-  const input = { id, rental_amount: 255000, deposit_amount: 170000 };
+  const input = {
+    id,
+    booking_id: bookingId,
+    rental_amount: 255000,
+    deposit_amount: 170000,
+  };
   await gateway.create(input, "https://rentify.example");
   await gateway.create(input, "https://rentify.example");
   expect(send.mock.calls[0][0]).toBe(
@@ -36,11 +42,29 @@ it("creates only GCash test checkout with fixed totals, no fees and stable idemp
     payment_method_types: ["gcash"],
     pass_on_fees: false,
     reference_number: id,
+    success_url: `https://rentify.example/checkout/${bookingId}`,
+    cancel_url: `https://rentify.example/checkout/${bookingId}`,
     line_items: [
       { amount: 255000, quantity: 1 },
       { amount: 170000, quantity: 1 },
     ],
   });
+});
+it("refuses an invalid booking return path before contacting the provider", async () => {
+  const send = vi.fn<typeof fetch>();
+  const gateway = paymongoProvider("sk_test_unit", send);
+  await expect(
+    gateway.create(
+      {
+        id,
+        booking_id: "../../account",
+        rental_amount: 10000,
+        deposit_amount: 0,
+      },
+      "https://rentify.example",
+    ),
+  ).rejects.toThrow();
+  expect(send).not.toHaveBeenCalled();
 });
 it.each(["sk_live_unit", "pk_test_unit", "", "anything"])(
   "rejects non-test server keys without contacting the provider: %s",
