@@ -1,6 +1,6 @@
 # Rentify product decisions
 
-**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 and B2.3 backend are merged. B2.4 is implemented in [PR #38](https://github.com/eloooong/rentify-app/pull/38) (`codex/cancellation-refunds`), pending review/merge; actual checkout/refund provider verification remains pending. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
+**Status: demo booking and payment defaults selected under Person B (Angel)'s authority — 18 October 2026.** Sections 1–6 were approved directly; Person B delegated section 7's payment choices in this chat. B2.1/B2.2 and B2.3 backend are merged. B2.4 merged in [PR #38](https://github.com/eloooong/rentify-app/pull/38); the Xendit migration merged in [PR #43](https://github.com/eloooong/rentify-app/pull/43). Core sandbox checkout/full-refund checks passed; remaining external gates are listed below. Planning PDFs do not override this record; live rentals, charges, deposit custody and payouts remain unauthorized.
 
 ## 1. First release
 
@@ -135,9 +135,9 @@ Authenticate Xendit callbacks with the secret `x-callback-token`, validate resou
 ### Remaining implementation gates
 
 - **Selected:** gateway/method, immediate test charge, existing deposit snapshot, fee treatment, pre-pickup full refund, late-payment handling and no automatic deductions/releases.
-- **External setup:** Xendit Test Mode account/development key exist, but session/refund probes returned 403. Required permissions, callback token, HTTPS delivery/return origin and genuine provider behavior remain pending. Secrets stay in ignored local files.
-- **Implementation:** original checkout/refund backends merged in PR #36/#38. PR #43 now migrates new attempts to Xendit while retaining old provider history. Both execution flags remain disabled until the external acceptance checks pass.
-- **A wait:** booking/checkout/refund contracts are merged; PR #43 adds the Xendit implementation and minimal provider wording for review. Actual payment/refund use waits for account setup and verification. A retains frontend ownership.
+- **External setup:** Money-in permissions, callback token, temporary HTTPS origin, genuine GCash sandbox checkout/completed delivery, worker reconciliation, unpaid cancellation and full refund verified locally. Full and partial refund capability passed; remaining external gates are still pending; secrets stay in ignored local files.
+- **Implementation:** checkout/refund backends merged in PR #36/#38; PR #43 merged Xendit provider isolation. Local test flags were enabled for controlled verification; environment defaults stay false.
+- **A handoff:** merged contracts and Xendit wording are available. A can connect paid cancellation; test checkout must wait for a new HTTPS origin, callbacks and worker. A retains frontend ownership.
 - **Still pending before live use:** marketplace/custody approval, payout arrangements, dispute authority/evidence/appeals, retention/privacy and deployment readiness. Demo defaults do not settle live policies.
 
 ## 8. Implementation handoff and acceptance examples
@@ -148,8 +148,22 @@ Required booking regression checks include: one-day and three-day totals; reject
 
 B2.3/B2.4 checks must cover exact totals, concurrent checkout retries, invalid callback tokens and production evidence, duplicate/out-of-order/missed events, cancellation/payment races, late-payment refunds, full/partial refund retries, failed refunds and outsider denial. Verify actual GCash test checkout, authenticated callback delivery, session expiry and refunds before claiming the external integration works. Publish exact API/ledger/error contracts before A connects checkout.
 
-**Decision record:** sections 1–6 approved directly by Person B (Angel); section 7 selected under Person B's explicit delegation on 18 October 2026. Person A's separate approval is not recorded. B2.1/B2.2 and B2.3 backend are merged; B2.4 backend is merged; Xendit migration and external provider checks remain pending in PR #43. Controls stay gated by dependencies and verification. Section 7 supersedes older policy-pending notes; the [booking](lib/bookings/README.md), [payment](lib/payments/README.md) and [refund](lib/payments/REFUNDS.md) contracts distinguish implemented behavior from external verification. Reviewed policy changes must preserve existing booking snapshots.
+**Decision record:** sections 1–6 approved directly by Person B (Angel); section 7 selected under Person B's explicit delegation on 18 October 2026. Person A's separate approval is not recorded. B2.1/B2.2 and B2.3 backend are merged; B2.4 backend is merged; Xendit migration merged in PR #43; core sandbox checks passed and remaining external gates are listed below. Controls stay gated by dependencies and verification. Section 7 supersedes older policy-pending notes; the [booking](lib/bookings/README.md), [payment](lib/payments/README.md) and [refund](lib/payments/REFUNDS.md) contracts distinguish implemented behavior from external verification. Reviewed policy changes must preserve existing booking snapshots.
 
 ### Xendit verification status — 25 October 2026
 
-The adapter/schema migration is being implemented in PR #43; execution remains disabled. A development key is present locally, but read-only session/refund probes returned `403 REQUEST_FORBIDDEN_ERROR`. API permissions, webhook delivery, an HTTPS return origin, actual GCash payments and full/partial refunds remain unverified. Existing PayMongo records retain their identity and are excluded from Xendit workers; legacy obligations require provider-specific review. The consent policy version describes the unchanged financial rules, with provider identity stored on new attempts.
+On 25 October 2026, B verified the actual Xendit Test Mode account:
+
+- Money-in Read/Write resolved the previous 403 responses. Refund reads returned 200; a nonexistent session returned the expected 404. Other key permissions stayed None. Secrets remain in ignored local configuration.
+- Both Payment Session Completed and Expired callback URLs persisted after a dashboard reload. Unsigned HTTPS requests were rejected. Xendit's generic dashboard sample describes an Indonesian SAVE session and correctly returned 400; saving a URL is not proof of valid payment delivery.
+- An accepted fixture booking opened hosted GCash checkout with PHP 2,550 rent and PHP 1,700 deposit. Xendit's eWallet Test Payment simulator completed the PHP 4,250 charge and returned to the booking checkout. One authenticated completed callback was durably recorded; the worker retrieved the capture and created exactly one receipt. The booking became paid and the browser displayed Payment received.
+- Authenticated paid cancellation recorded the PHP 4,250 obligation. The refund worker submitted once, observed pending, then confirmed succeeded through authenticated reads. Private status reported 425,000 centavos refunded and zero outstanding.
+- A separate genuine unpaid session was cancelled through the app. The worker retrieved Xendit status CANCELED and persisted checkout state expired without a receipt.
+
+The temporary Cloudflare Quick Tunnel used for verification has stopped. Its two test callback URLs were removed, local app origin was restored to http://localhost:3000, and both local payment execution flags were returned to false. Test keys and verification token remain in ignored configuration. A new stable HTTPS origin, registered callbacks and a running worker are required before re-enabling checkout/refunds.
+
+A separate PHP 100 GCash Test Mode payment completed through Xendit's hosted eWallet simulator. The production refund adapter submitted PHP 25 and, only after authenticated success, the remaining PHP 75. Both moved from pending to succeeded; authenticated list and individual retrieval matched references and amounts, and the total exactly equaled the PHP 100 capture. This is gateway capability verification; the public app still creates full remaining refunds only, and its partial-ledger regression remains synthetic.
+
+Genuine expired-event delivery, provider failure/unknown-outcome scenarios and durable hosted worker operation remain unverified. Keep B2.3/B2.4 unchecked until remaining gates pass. No live money, owner payout or deposit settlement is enabled.
+
+Existing PayMongo records retain their identity and are excluded from Xendit workers; legacy obligations require provider-specific review. The consent version describes unchanged financial rules, with provider identity stored on new attempts.
