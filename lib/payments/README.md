@@ -1,6 +1,6 @@
 # B2.3 Xendit test checkout — provider verification pending
 
-Angel selected Xendit on 25 October 2026. This replaces the PayMongo adapter while preserving historical records and the [financial rules](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo). Execution remains disabled until verified. Local tests do not establish genuine gateway success.
+Angel selected Xendit on 25 October 2026. This replaces the PayMongo adapter while preserving historical records and the [financial rules](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo). The migration merged in [PR #43](https://github.com/eloooong/rentify-app/pull/43). Core sandbox checkout/callback/refund checks passed; remaining external gates are listed below.
 
 ## Contract for Person A
 
@@ -63,6 +63,16 @@ npm run payments:worker -- --loop
 
 Run lint, types, unit tests, formatting, build, database lint/SQL/access/concurrency checks, HTTP/browser journeys and generated-type drift checks. Unit transports and server-side database fixtures are synthetic; no public simulator exists.
 
-Read-only account probes on 25 October 2026 returned **403 REQUEST_FORBIDDEN_ERROR** for session/refund access. Key presence is not proof of permission. Genuine GCash payment, HTTPS callbacks, expiry/cancellation, full/partial refunds, unknown-result recovery and worker operation remain pending. Keep B2.3/B2.4 unchecked until verified. No live money, owner payout or deposit settlement is enabled.
+On 25 October 2026, B verified the actual Xendit Test Mode account:
+
+- Money-in Read/Write resolved the previous 403 responses. Refund reads returned 200; a nonexistent session returned the expected 404. Other key permissions stayed None. Secrets remain in ignored local configuration.
+- Both Payment Session Completed and Expired callback URLs persisted after a dashboard reload. Unsigned HTTPS requests were rejected. Xendit's generic dashboard sample describes an Indonesian SAVE session and correctly returned 400; saving a URL is not proof of valid payment delivery.
+- An accepted fixture booking opened hosted GCash checkout with PHP 2,550 rent and PHP 1,700 deposit. Xendit's eWallet Test Payment simulator completed the PHP 4,250 charge and returned to the booking checkout. One authenticated completed callback was durably recorded; the worker retrieved the capture and created exactly one receipt. The booking became paid and the browser displayed Payment received.
+- Authenticated paid cancellation recorded the PHP 4,250 obligation. The refund worker submitted once, observed pending, then confirmed succeeded through authenticated reads. Private status reported 425,000 centavos refunded and zero outstanding.
+- A separate genuine unpaid session was cancelled through the app. The worker retrieved Xendit status CANCELED and persisted checkout state expired without a receipt.
+
+Payments/refunds were enabled in ignored local configuration for controlled Test Mode verification. A temporary Cloudflare Quick Tunnel supplies HTTPS; it works only while the tunnel and app process run. Replacing it requires updating both Xendit callbacks, the app/return origins, then rebuilding and restarting. Persistent hosting and scheduling remain unconfigured.
+
+Partial-refund capability, genuine expired-event delivery, provider failure/unknown-outcome scenarios and durable hosted worker operation remain unverified. The additional PHP 100 sandbox request for partial-refund testing awaits hosted test authorization; the documented API simulation did not complete it. Keep B2.3/B2.4 unchecked until remaining gates pass. No live money, owner payout or deposit settlement is enabled.
 
 Sources: [create](https://docs.xendit.co/apidocs/create-session), [retrieve](https://docs.xendit.co/apidocs/get-session), [cancel](https://docs.xendit.co/apidocs/cancel-session), [payment](https://docs.xendit.co/apidocs/get-payment), [GCash](https://docs.xendit.co/docs/gcash), [webhooks](https://docs.xendit.co/docs/handling-webhooks), [refund request](https://docs.xendit.co/apidocs/refund-payment-request), [official refund SDK](https://github.com/xendit/xendit-node/blob/master/docs/Refund.md).
