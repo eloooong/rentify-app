@@ -418,7 +418,9 @@ test(
       const channels = [];
       async function subscribe(client, key, table, event, filter) {
         const channel = client
-          .channel("test-" + randomUUID())
+          .channel("test-" + randomUUID(), {
+            config: { broadcast: { replication_ready: true } },
+          })
           .on(
             "postgres_changes",
             { schema: "public", table, event, ...(filter ? { filter } : {}) },
@@ -426,19 +428,47 @@ test(
           );
         channels.push([client, channel]);
         await new Promise((resolve, reject) => {
+          let joined = false,
+            postgresReady = false,
+            replicationReady = false;
           const timer = setTimeout(
             () =>
               reject(
                 new Error(
-                  `Local Realtime subscribe timeout: ${table}/${event}`,
+                  `Local Realtime readiness timeout: ${table}/${event} (joined=${joined}, postgres=${postgresReady}, replication=${replicationReady})`,
                 ),
               ),
             30000,
           );
-          channel.subscribe((status) => {
-            if (status === "SUBSCRIBED") {
+          function ready() {
+            if (joined && postgresReady && replicationReady) {
               clearTimeout(timer);
               resolve();
+            }
+          }
+          channel.on("system", {}, (payload) => {
+            if (!["system", "postgres_changes"].includes(payload.extension))
+              return;
+            if (payload.status === "error") {
+              clearTimeout(timer);
+              reject(
+                new Error(
+                  `Local Realtime ${payload.extension} readiness failed: ${table}/${event}`,
+                ),
+              );
+              return;
+            }
+            if (payload.status === "ok") {
+              if (payload.extension === "postgres_changes")
+                postgresReady = true;
+              if (payload.extension === "system") replicationReady = true;
+              ready();
+            }
+          });
+          channel.subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              joined = true;
+              ready();
             } else if (["CHANNEL_ERROR", "TIMED_OUT"].includes(status)) {
               clearTimeout(timer);
               reject(
@@ -456,7 +486,9 @@ test(
           if (predicate()) return;
           await new Promise((r) => setTimeout(r, 100));
         }
-        assert.fail("Expected authorized Realtime delivery was not observed");
+        assert.fail(
+          `Expected authorized Realtime delivery was not observed (messages=${observed.ownerMessages.length}, notifications=${observed.ownerNotifications.length}, receipts=${observed.readUpdates.length})`,
+        );
       }
       try {
         await Promise.all([
