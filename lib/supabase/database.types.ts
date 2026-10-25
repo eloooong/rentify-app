@@ -334,8 +334,9 @@ export type Database = {
           created_at: string;
           id: string;
           updated_at: string;
+          chat_conversation_json: Json | null;
         };
-        ComputedFields: never;
+        ComputedFields: "chat_conversation_json";
         Insert: {
           booking_id: string;
           created_at?: string;
@@ -464,6 +465,7 @@ export type Database = {
       messages: {
         Row: {
           body: string;
+          client_key: string;
           conversation_id: string;
           created_at: string;
           id: string;
@@ -474,6 +476,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           body: string;
+          client_key?: string;
           conversation_id: string;
           created_at?: string;
           id?: string;
@@ -483,6 +486,7 @@ export type Database = {
         };
         Update: {
           body?: string;
+          client_key?: string;
           conversation_id?: string;
           created_at?: string;
           id?: string;
@@ -510,16 +514,19 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string;
+          event_key: string | null;
           id: string;
           payload: NonNullable<Json>;
           read_at: string | null;
           type: string;
           updated_at: string;
           user_id: string;
+          notification_json: Json | null;
         };
-        ComputedFields: never;
+        ComputedFields: "notification_json";
         Insert: {
           created_at?: string;
+          event_key?: string | null;
           id?: string;
           payload?: NonNullable<Json>;
           read_at?: string | null;
@@ -529,6 +536,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          event_key?: string | null;
           id?: string;
           payload?: NonNullable<Json>;
           read_at?: string | null;
@@ -1002,6 +1010,16 @@ export type Database = {
         Args: { p_booking: string; p_reason: string };
         Returns: Json;
       };
+      chat_can_read: { Args: { p_booking: string }; Returns: boolean };
+      chat_conversation_json: {
+        Args: {
+          c: Omit<
+            Database["public"]["Tables"]["conversations"]["Row"],
+            Database["public"]["Tables"]["conversations"]["ComputedFields"]
+          >;
+        };
+        Returns: Json;
+      };
       checkout_can_pay: { Args: { p_booking: string }; Returns: boolean };
       checkout_payload: {
         Args: {
@@ -1056,6 +1074,7 @@ export type Database = {
           receipt_id: string;
         }[];
       };
+      communication_user: { Args: Record<PropertyKey, never>; Returns: string };
       enqueue_payment_event: {
         Args: {
           p_event: string;
@@ -1082,6 +1101,10 @@ export type Database = {
       get_booking_refunds: { Args: { p_booking: string }; Returns: Json };
       get_checkout: { Args: { p_booking: string }; Returns: Json };
       is_public_listing: { Args: { listing: string }; Returns: boolean };
+      list_chat_messages: {
+        Args: { p_before?: string; p_conversation: string; p_limit?: number };
+        Returns: Json;
+      };
       list_my_bookings: {
         Args: {
           p_page?: number;
@@ -1089,6 +1112,14 @@ export type Database = {
           p_role?: string;
           p_status?: Database["public"]["Enums"]["booking_status"];
         };
+        Returns: Json;
+      };
+      list_my_conversations: {
+        Args: { p_page?: number; p_page_size?: number };
+        Returns: Json;
+      };
+      list_my_notifications: {
+        Args: { p_page?: number; p_page_size?: number; p_unread?: boolean };
         Returns: Json;
       };
       list_payment_history: {
@@ -1102,6 +1133,24 @@ export type Database = {
         };
         Returns: Json;
       };
+      mark_chat_read: {
+        Args: { p_conversation: string; p_through: string };
+        Returns: Json;
+      };
+      mark_notification_read: {
+        Args: { p_notification: string };
+        Returns: Json;
+      };
+      notification_json: {
+        Args: {
+          n: Omit<
+            Database["public"]["Tables"]["notifications"]["Row"],
+            Database["public"]["Tables"]["notifications"]["ComputedFields"]
+          >;
+        };
+        Returns: Json;
+      };
+      open_booking_chat: { Args: { p_booking: string }; Returns: Json };
       paid_cancellation_allowed: {
         Args: {
           actor: string;
@@ -1139,6 +1188,10 @@ export type Database = {
       save_my_profile: {
         Args: { p_display_name: string; p_phone?: string };
         Returns: undefined;
+      };
+      send_chat_message: {
+        Args: { p_body: string; p_conversation: string; p_key: string };
+        Returns: Json;
       };
       start_checkout_creation: {
         Args: { p_attempt: string; p_lease: string };

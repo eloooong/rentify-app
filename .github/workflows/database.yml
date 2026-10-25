@@ -11,9 +11,13 @@ on:
       - lib/catalog/**
       - lib/bookings/**
       - lib/payments/**
+      - lib/chat/**
+      - lib/notifications/**
       - app/api/catalog/**
       - app/api/bookings/**
       - app/api/payments/**
+      - app/api/conversations/**
+      - app/api/notifications/**
       - tests/e2e/catalog.py
       - app/(auth)/**
       - app/layout.tsx
@@ -38,9 +42,13 @@ on:
       - lib/catalog/**
       - lib/bookings/**
       - lib/payments/**
+      - lib/chat/**
+      - lib/notifications/**
       - app/api/catalog/**
       - app/api/bookings/**
       - app/api/payments/**
+      - app/api/conversations/**
+      - app/api/notifications/**
       - tests/e2e/catalog.py
       - app/(auth)/**
       - app/layout.tsx
@@ -84,7 +92,7 @@ jobs:
         run: npm ci
       - name: Start disposable database and API
         # The CLI's status summary includes local privileged keys; keep it out of logs.
-        run: npm run db:start -- --exclude realtime,imgproxy,postgres-meta,studio,logflare,vector,supavisor > /dev/null
+        run: npm run db:start -- --exclude imgproxy,postgres-meta,studio,logflare,vector,supavisor > /dev/null
       - name: Rebuild from migrations
         run: npm run db:reset
       - name: Check database functions
@@ -99,6 +107,8 @@ jobs:
         run: npm run db:test:refunds
       - name: Test participant transaction history and Manila date boundaries
         run: npm run db:test:history
+      - name: Test chat, notifications and real Realtime access boundaries
+        run: npm run db:test:chat
       - name: Test local demo seed, preservation, privacy, and scoped reset
         run: npm run db:demo:test
       - name: Test real HTTP access and Server Component client
@@ -140,6 +150,8 @@ jobs:
         run: npm run test:refunds:http
       - name: Test private transaction history HTTP routes
         run: npm run test:history:http
+      - name: Test private chat and notification HTTP routes
+        run: npm run test:chat:http
       - name: Stop auth journey app
         if: always()
         run: |
