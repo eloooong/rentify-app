@@ -100,6 +100,7 @@ export async function withBookingFixtures(run) {
         delete from public.payment_events where attempt_id in (select a.id from public.checkout_attempts a join public.bookings b on b.id=a.booking_id where b.owner_id='${owner}' and b.listing_id in (${ids}));
         delete from public.payment_receipts where attempt_id in (select a.id from public.checkout_attempts a join public.bookings b on b.id=a.booking_id where b.owner_id='${owner}' and b.listing_id in (${ids}));
         delete from public.checkout_attempts where booking_id in (select id from public.bookings where owner_id='${owner}' and listing_id in (${ids}));
+        delete from public.conversations where booking_id in (select id from public.bookings where owner_id='${owner}' and listing_id in (${ids}));
         delete from public.bookings where owner_id='${owner}' and listing_id in (${ids}); commit;`);
       await resetDemo(connection, fixtures);
     }
