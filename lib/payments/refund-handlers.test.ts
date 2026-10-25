@@ -55,7 +55,7 @@ it("requires a verified identity and keeps even errors private", async () => {
   expect(r.headers.get("cache-control")).toContain("no-store");
   expect(mocks.rpc).not.toHaveBeenCalled();
 });
-it("reads safe participant status without requiring configured PayMongo", async () => {
+it("reads safe participant status without requiring configured Xendit", async () => {
   signedIn();
   mocks.rpc.mockResolvedValue({ data: summary, error: null });
   const r = await bookingRefunds(request(), id);
@@ -118,7 +118,7 @@ it("requires worker bearer authorization and separate refund opt-in", async () =
     "unit-worker-secret-with-at-least-thirty-two-characters",
   );
   vi.stubEnv("RENTIFY_PAYMENTS_ENABLED", "true");
-  vi.stubEnv("PAYMONGO_SECRET_KEY", "sk_test_unit");
+  vi.stubEnv("XENDIT_SECRET_KEY", "xnd_development_unit");
   vi.stubEnv("RENTIFY_REFUNDS_ENABLED", "false");
   const r = new NextRequest(
     "http://localhost:3000/api/payments/refunds/reconcile",

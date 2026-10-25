@@ -41,14 +41,14 @@ test(
           )[0];
           const suffix = randomUUID().replaceAll("-", "");
           const snapshot = {
-            session_id: `cs_${suffix}`,
+            session_id: `ps-${suffix.slice(0, 24)}`,
             reference: a.id,
-            checkout_url: `https://checkout.paymongo.com/${suffix}`,
+            checkout_url: `https://dev.xen.to/${suffix}`,
             status: "active",
             livemode: false,
             payments: [
               {
-                id: `pay_${suffix}`,
+                id: `py-${suffix.slice(0, 8)}-${suffix.slice(8, 12)}-${suffix.slice(12, 16)}-${suffix.slice(16, 20)}-${suffix.slice(20)}`,
                 amount: a.total_amount,
                 currency: "PHP",
                 method: "gcash",
@@ -70,7 +70,7 @@ test(
             booking: b.id,
             attempt: a.id,
             snapshot,
-            payment: `pay_${suffix}`,
+            payment: `py-${suffix.slice(0, 8)}-${suffix.slice(8, 12)}-${suffix.slice(12, 16)}-${suffix.slice(16, 20)}-${suffix.slice(20)}`,
           };
         }
         const status = async (id, client = renter) =>
@@ -94,7 +94,7 @@ test(
           });
         function result(job, state = "succeeded") {
           return {
-            id: `ref_${job.id.replaceAll("-", "")}`,
+            id: `rfd-${job.id}`,
             payment_id: job.payment_id,
             amount: job.amount,
             currency: "PHP",
@@ -401,7 +401,7 @@ test(
           }),
         )[0];
         const lateSnapshot = structuredClone(late.snapshot);
-        lateSnapshot.payments[0].id = `pay_${randomUUID().replaceAll("-", "")}`;
+        lateSnapshot.payments[0].id = `py-${randomUUID()}`;
         assert.equal(
           data(
             await admin.rpc("sync_checkout", {

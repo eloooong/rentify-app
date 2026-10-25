@@ -3,9 +3,9 @@ import { runPaymentWork, type PaymentClient } from "./work";
 import { ProviderError, type PaymentProvider, type Snapshot } from "./provider";
 const id = "a1000000-0000-4000-8000-000000000001";
 const snapshot: Snapshot = {
-  session_id: "cs_fixture",
+  session_id: "ps-661f87c614802d6c402cd82d",
   reference: id,
-  checkout_url: "https://checkout.paymongo.com/fixture",
+  checkout_url: "https://dev.xen.to/fixture",
   status: "active",
   livemode: false,
   payments: [],
@@ -15,7 +15,7 @@ function fixture(closed = false, overrides: Record<string, unknown> = {}) {
     id,
     booking_id: id,
     lease_token: id,
-    session_id: "cs_fixture",
+    session_id: "ps-661f87c614802d6c402cd82d",
     candidate_session_id: null,
     creation_started_at: null,
     rental_amount: 10000,
@@ -50,7 +50,9 @@ it("uses one leased job and the stored session, avoiding another checkout creati
   ).toEqual({ claimed: 1, completed: 1 });
   expect(f.rpc.mock.calls[0]).toEqual(["claim_payment_work", { p_limit: 1 }]);
   expect(f.provider.create).not.toHaveBeenCalled();
-  expect(f.provider.retrieve).toHaveBeenCalledWith("cs_fixture");
+  expect(f.provider.retrieve).toHaveBeenCalledWith(
+    "ps-661f87c614802d6c402cd82d",
+  );
 });
 it("persists transient failures for another reconciliation attempt", async () => {
   const f = fixture();
@@ -73,7 +75,7 @@ it("re-reads when expiry rejects an ongoing payment, without creating a replacem
   );
   await runPaymentWork(f.admin, f.provider, "http://localhost:3000");
   expect(f.provider.retrieve).toHaveBeenCalledTimes(2);
-  expect(f.provider.expire).toHaveBeenCalledWith("cs_fixture");
+  expect(f.provider.expire).toHaveBeenCalledWith("ps-661f87c614802d6c402cd82d");
   expect(f.provider.create).not.toHaveBeenCalled();
 });
 it("does not call expire on a paid snapshot; the DB decides late-payment refunds", async () => {
@@ -127,6 +129,19 @@ it("marks creation before the network call so a crash leaves a reconcilable obli
     f.job,
     "http://localhost:3000",
   );
+});
+it("does not repeat an uncertain Xendit create even while the booking remains payable", async () => {
+  const f = fixture(false, {
+    session_id: null,
+    creation_started_at: "2026-10-25T10:00:00Z",
+  });
+  await runPaymentWork(f.admin, f.provider, "https://rentify.example");
+  expect(f.provider.create).not.toHaveBeenCalled();
+  expect(f.rpc).toHaveBeenLastCalledWith("fail_payment_work", {
+    p_attempt: id,
+    p_lease: id,
+    p_code: "creation_unknown",
+  });
 });
 it("rejects a session with another reference instead of binding it", async () => {
   const f = fixture();

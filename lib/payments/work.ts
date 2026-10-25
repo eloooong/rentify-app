@@ -30,6 +30,16 @@ export async function runPaymentWork(
         await admin.rpc("checkout_can_pay", { p_booking: job.booking_id }),
       );
       const id = job.session_id ?? job.candidate_session_id;
+      if (!id && job.creation_started_at) {
+        checked(
+          await admin.rpc("fail_payment_work", {
+            p_attempt: job.id,
+            p_lease: lease,
+            p_code: "creation_unknown",
+          }),
+        );
+        continue;
+      }
       if (!id && closed) {
         // A timed-out create may have succeeded. Only its webhook/provider lookup can resolve it.
         checked(

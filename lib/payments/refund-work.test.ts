@@ -109,7 +109,10 @@ it("retrieves a known provider refund without another create or list", async () 
     creation_started_at: "2026-01-01",
   });
   await runRefundWork(f.admin, f.provider);
-  expect(f.provider.retrieve).toHaveBeenCalledWith("ref_fixture");
+  expect(f.provider.retrieve).toHaveBeenCalledWith(
+    "ref_fixture",
+    "pay_fixture",
+  );
   expect(f.provider.create).not.toHaveBeenCalled();
   expect(f.provider.list).not.toHaveBeenCalled();
 });

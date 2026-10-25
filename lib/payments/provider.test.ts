@@ -1,159 +1,194 @@
 import { expect, it, vi } from "vitest";
-import { normalizeSession, paymongoProvider } from "./provider";
+import { normalizeSession, xenditProvider } from "./provider";
+import { minorAmount } from "./xendit";
 const id = "a1000000-0000-4000-8000-000000000001";
-const bookingId = "a1000000-0000-4000-8000-000000000002";
-function response() {
-  return {
-    data: {
-      id: "cs_fixture",
-      type: "checkout_session",
-      attributes: {
-        livemode: false,
-        reference_number: id,
-        checkout_url: "https://checkout.paymongo.com/fixture",
-        status: "active",
-        payments: [] as unknown[],
-      },
-    },
-  };
-}
-it("creates only GCash test checkout with fixed totals, no fees and stable idempotency", async () => {
+const booking = "a1000000-0000-4000-8000-000000000002";
+const sid = "ps-661f87c614802d6c402cd82d";
+const pid = `py-${id}`;
+const rid = `pr-${id}`;
+const session = () => ({
+  payment_session_id: sid,
+  reference_id: id,
+  business_id: "business",
+  session_type: "PAY",
+  mode: "PAYMENT_LINK",
+  country: "PH",
+  currency: "PHP",
+  amount: 4250,
+  status: "ACTIVE",
+  payment_link_url: "https://dev.xen.to/fixture",
+  payment_id: null as string | null,
+  payment_request_id: null as string | null,
+});
+const payment = () => ({
+  payment_id: pid,
+  payment_request_id: rid,
+  business_id: "business",
+  status: "SUCCEEDED",
+  country: "PH",
+  currency: "PHP",
+  channel_code: "GCASH",
+  request_amount: 4250,
+  captures: [
+    { capture_amount: 4250, capture_timestamp: "2026-10-25T10:00:00Z" },
+  ],
+});
+const input = {
+  id,
+  booking_id: booking,
+  rental_amount: 255000,
+  deposit_amount: 170000,
+};
+it("creates a GCash-only Xendit test session with exact peso amounts and booking return URLs", async () => {
   const send = vi
     .fn<typeof fetch>()
-    .mockImplementation(async () => Response.json(response()));
-  const gateway = paymongoProvider("sk_test_unit", send);
-  const input = {
-    id,
-    booking_id: bookingId,
-    rental_amount: 255000,
-    deposit_amount: 170000,
-  };
-  await gateway.create(input, "https://rentify.example");
-  await gateway.create(input, "https://rentify.example");
-  expect(send.mock.calls[0][0]).toBe(
-    "https://api.paymongo.com/v2/checkout_sessions",
+    .mockResolvedValue(Response.json(session()));
+  await xenditProvider("xnd_development_unit", send).create(
+    input,
+    "https://rentify.example",
   );
+  expect(send.mock.calls[0][0]).toBe("https://api.xendit.co/sessions");
   const options = send.mock.calls[0][1]!;
-  expect(options.headers).toMatchObject({
-    "Idempotency-Key": `rentify-checkout-${id}`,
-  });
-  expect(send.mock.calls[1][1]!.body).toBe(options.body);
-  expect(JSON.parse(options.body as string).data.attributes).toMatchObject({
-    payment_method_types: ["gcash"],
-    pass_on_fees: false,
-    reference_number: id,
-    success_url: `https://rentify.example/checkout/${bookingId}`,
-    cancel_url: `https://rentify.example/checkout/${bookingId}`,
-    line_items: [
-      { amount: 255000, quantity: 1 },
-      { amount: 170000, quantity: 1 },
+  expect(options.method).toBe("POST");
+  expect(options.redirect).toBe("error");
+  expect(options.headers).not.toHaveProperty("Idempotency-Key");
+  expect(JSON.parse(options.body as string)).toMatchObject({
+    reference_id: id,
+    session_type: "PAY",
+    mode: "PAYMENT_LINK",
+    allow_save_payment_method: "DISABLED",
+    amount: 4250,
+    currency: "PHP",
+    country: "PH",
+    allowed_payment_channels: ["GCASH"],
+    success_return_url: `https://rentify.example/checkout/${booking}`,
+    cancel_return_url: `https://rentify.example/checkout/${booking}`,
+    items: [
+      { net_unit_amount: 2550, quantity: 1 },
+      { net_unit_amount: 1700, quantity: 1 },
     ],
   });
 });
-it("refuses an invalid booking return path before contacting the provider", async () => {
-  const send = vi.fn<typeof fetch>();
-  const gateway = paymongoProvider("sk_test_unit", send);
-  await expect(
-    gateway.create(
-      {
-        id,
-        booking_id: "../../account",
-        rental_amount: 10000,
-        deposit_amount: 0,
-      },
-      "https://rentify.example",
-    ),
-  ).rejects.toThrow();
-  expect(send).not.toHaveBeenCalled();
+it("supports zero deposit and centavo precision without adding a deposit line", async () => {
+  const send = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(Response.json({ ...session(), amount: 100.01 }));
+  await xenditProvider("xnd_development_unit", send).create(
+    { ...input, rental_amount: 10001, deposit_amount: 0 },
+    "https://rentify.example",
+  );
+  expect(JSON.parse(send.mock.calls[0][1]!.body as string).items).toHaveLength(
+    1,
+  );
+  expect(minorAmount(100.01)).toBe(10001);
 });
-it.each(["sk_live_unit", "pk_test_unit", "", "anything"])(
-  "rejects non-test server keys without contacting the provider: %s",
+it.each(["xnd_production_unit", "sk_test_unit", "", "anything"])(
+  "rejects non-development keys: %s",
   (key) => {
-    const send = vi.fn();
-    expect(() => paymongoProvider(key, send)).toThrow();
+    const send = vi.fn<typeof fetch>();
+    expect(() => xenditProvider(key, send)).toThrow();
     expect(send).not.toHaveBeenCalled();
   },
 );
-it("pins retrieval/expiry endpoints and refuses identifier path injection", async () => {
+it.each([
+  "http://localhost:3000",
+  "https://user@rentify.example",
+  "https://rentify.example/path",
+])("requires a configured HTTPS return origin: %s", async (origin) => {
+  const send = vi.fn<typeof fetch>();
+  await expect(
+    xenditProvider("xnd_development_unit", send).create(input, origin),
+  ).rejects.toThrow();
+  expect(send).not.toHaveBeenCalled();
+});
+it("rejects path injection and quotes exceeding GCash limits before network work", async () => {
+  const send = vi.fn<typeof fetch>();
+  const p = xenditProvider("xnd_development_unit", send);
+  await expect(
+    p.create({ ...input, booking_id: "../account" }, "https://rentify.example"),
+  ).rejects.toThrow();
+  await expect(
+    p.create(
+      { ...input, rental_amount: 10_000_001 },
+      "https://rentify.example",
+    ),
+  ).rejects.toThrow();
+  await expect(p.retrieve("ps-../secret")).rejects.toThrow();
+  expect(send).not.toHaveBeenCalled();
+});
+it("retrieves actual captured payment evidence before normalizing completed sessions", async () => {
+  const s = {
+    ...session(),
+    status: "COMPLETED",
+    payment_id: pid,
+    payment_request_id: rid,
+  };
   const send = vi
     .fn<typeof fetch>()
-    .mockImplementation(async () => Response.json(response()));
-  const gateway = paymongoProvider("sk_test_unit", send);
-  await gateway.retrieve("cs_fixture");
-  await gateway.expire("cs_fixture");
-  expect(send.mock.calls.map((call) => call[0])).toEqual([
-    "https://api.paymongo.com/v1/checkout_sessions/cs_fixture",
-    "https://api.paymongo.com/v1/checkout_sessions/cs_fixture/expire",
+    .mockResolvedValueOnce(Response.json(s))
+    .mockResolvedValueOnce(Response.json(payment()));
+  const result = await xenditProvider("xnd_development_unit", send).retrieve(
+    sid,
+  );
+  expect(send.mock.calls.map((c) => c[0])).toEqual([
+    `https://api.xendit.co/sessions/${sid}`,
+    `https://api.xendit.co/v3/payments/${pid}`,
   ]);
-  await expect(gateway.retrieve("cs_other/../../secrets")).rejects.toThrow();
-  expect(send).toHaveBeenCalledTimes(2);
+  expect(result.payments).toEqual([
+    {
+      id: pid,
+      amount: 425000,
+      currency: "PHP",
+      method: "gcash",
+      paid_at: "2026-10-25T10:00:00Z",
+    },
+  ]);
+  expect(() => normalizeSession(s)).toThrow();
+  for (const p of [
+    { ...payment(), business_id: "other" },
+    { ...payment(), payment_request_id: `pr-${booking}` },
+    { ...payment(), status: "PENDING" },
+    { ...payment(), captures: [] },
+    { ...payment(), request_amount: 1 },
+  ])
+    expect(() => normalizeSession(s, p)).toThrow();
 });
 it.each([
+  "https://checkout.xendit.co/sessions/" + sid,
   "https://evil.example/pay",
-  "http://checkout.paymongo.com/pay",
-  "https://checkout.paymongo.com.evil.example/pay",
-  "https://user:pass@checkout.paymongo.com/pay",
-])("rejects unsafe checkout URLs: %s", (url) => {
-  const value = response();
-  value.data.attributes.checkout_url = url;
-  expect(() => normalizeSession(value)).toThrow();
+  "https://dev.xen.to.evil.example/pay",
+  "https://user@dev.xen.to/pay",
+  "http://dev.xen.to/pay",
+])("rejects live or unsafe checkout URLs: %s", (url) => {
+  expect(() =>
+    normalizeSession({ ...session(), payment_link_url: url }),
+  ).toThrow();
 });
-it("rejects live resources and requires complete paid evidence, ignoring untrusted extra billing fields", () => {
-  const value = response();
-  Object.assign(value.data.attributes, { livemode: true });
-  expect(() => normalizeSession(value)).toThrow();
-  Object.assign(value.data.attributes, {
-    livemode: false,
-    payments: [
-      {
-        id: "pay_fixture",
-        attributes: {
-          status: "paid",
-          amount: 425000,
-          currency: "PHP",
-          livemode: false,
-          source: { type: "gcash" },
-          paid_at: 1760000000,
-          billing: { email: "private@example.test" },
-        },
-      },
-    ],
-  });
-  const normalized = normalizeSession(value);
-  expect(normalized.payments[0]).toMatchObject({
-    amount: 425000,
-    method: "gcash",
-  });
-  expect(JSON.stringify(normalized)).not.toContain("private@example.test");
-  (
-    value.data.attributes.payments[0] as { attributes: { paid_at: unknown } }
-  ).attributes.paid_at = null;
-  expect(() => normalizeSession(value)).toThrow();
-});
-it("keeps errors generic and never echoes a raw provider error or API key", async () => {
-  const gateway = paymongoProvider(
-    "sk_test_unit",
-    vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({ private: "private-provider-details" }, { status: 500 }),
-      ),
+it("normalizes canceled/expired sessions and pins cancellation endpoint", async () => {
+  const send = vi.fn<typeof fetch>().mockResolvedValue(Response.json({}));
+  await xenditProvider("xnd_development_unit", send).expire(sid);
+  expect(send.mock.calls[0][0]).toBe(
+    `https://api.xendit.co/sessions/${sid}/cancel`,
   );
-  await expect(gateway.retrieve("cs_fixture")).rejects.toMatchObject({
-    code: "provider_unavailable",
-  });
-  await expect(gateway.retrieve("cs_fixture")).rejects.not.toThrow(
-    "private-provider-details",
-  );
+  expect(
+    normalizeSession({
+      ...session(),
+      status: "CANCELED",
+      payment_link_url: null,
+    }).status,
+  ).toBe("expired");
 });
-it("accepts an explicitly expired session without a remaining checkout capability", () => {
-  const value = response();
-  Object.assign(value.data.attributes, {
-    status: "expired",
-    checkout_url: null,
-  });
-  expect(normalizeSession(value)).toMatchObject({
-    status: "expired",
-    checkout_url: null,
-  });
+it.each([0, -1, 1.001, 100000.01, Infinity])(
+  "rejects invalid PHP amounts: %s",
+  (amount) => expect(() => minorAmount(amount)).toThrow(),
+);
+it("keeps raw provider errors private", async () => {
+  const send = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(
+      Response.json({ message: "private details" }, { status: 403 }),
+    );
+  await expect(
+    xenditProvider("xnd_development_unit", send).retrieve(sid),
+  ).rejects.toThrow("could not be verified");
 });

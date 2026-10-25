@@ -1,4 +1,3 @@
-import { createHmac } from "node:crypto";
 import { NextRequest } from "next/server";
 import { afterEach, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
@@ -93,35 +92,29 @@ it("denies worker requests without the server bearer secret", async () => {
   ).toBe(403);
   expect(mocks.adminRpc).not.toHaveBeenCalled();
 });
-it("durably queues a signed event before acknowledging it, and returns 503 on persistence failure", async () => {
+it("durably queues authenticated Xendit callbacks before acknowledgement", async () => {
   vi.stubEnv("RENTIFY_PAYMENTS_ENABLED", "true");
-  vi.stubEnv("PAYMONGO_WEBHOOK_SECRET", "unit-webhook-secret");
+  vi.stubEnv("XENDIT_WEBHOOK_TOKEN", "unit-webhook-token");
   const raw = JSON.stringify({
+    event: "payment_session.completed",
+    business_id: "business",
     data: {
-      id: "evt_fixture",
-      type: "event",
-      attributes: {
-        type: "checkout_session.payment.paid",
-        livemode: false,
-        data: {
-          id: "cs_fixture",
-          type: "checkout_session",
-          attributes: { reference_number: id, livemode: false },
-        },
-      },
+      payment_session_id: "ps-661f87c614802d6c402cd82d",
+      reference_id: id,
+      business_id: "business",
+      session_type: "PAY",
+      country: "PH",
+      currency: "PHP",
+      mode: "PAYMENT_LINK",
     },
   });
-  const t = Math.floor(Date.now() / 1000);
-  const sig = createHmac("sha256", "unit-webhook-secret")
-    .update(`${t}.${raw}`)
-    .digest("hex");
   const call = () =>
     webhook(
       new NextRequest("http://localhost:3000/api/payments/webhook", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Paymongo-Signature": `t=${t},te=${sig},li=`,
+          "x-callback-token": "unit-webhook-token",
         },
         body: raw,
       }),
@@ -131,8 +124,8 @@ it("durably queues a signed event before acknowledging it, and returns 503 on pe
   expect(mocks.adminRpc).toHaveBeenCalledWith(
     "enqueue_payment_event",
     expect.objectContaining({
-      p_event: "evt_fixture",
-      p_session: "cs_fixture",
+      p_event: expect.stringMatching(/^xevt_[a-f0-9]{64}$/),
+      p_session: "ps-661f87c614802d6c402cd82d",
       p_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
     }),
   );
@@ -143,4 +136,23 @@ it("durably queues a signed event before acknowledging it, and returns 503 on pe
   const response = await call();
   expect(response.status).toBe(503);
   expect(await response.text()).not.toContain("private SQL");
+});
+it("checks HTTPS provider-return configuration before persisting a checkout attempt", async () => {
+  vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+  vi.stubEnv("RENTIFY_PAYMENTS_ENABLED", "true");
+  vi.stubEnv("XENDIT_SECRET_KEY", "xnd_development_unit");
+  vi.stubEnv("XENDIT_RETURN_ORIGIN", "");
+  mocks.getUser.mockResolvedValue({
+    data: { user: { email_confirmed_at: "now" } },
+    error: null,
+  });
+  expect(
+    (
+      await checkout(
+        request("POST", { policy_version: "demo-payments-v1" }),
+        id,
+      )
+    ).status,
+  ).toBe(503);
+  expect(mocks.rpc).not.toHaveBeenCalled();
 });

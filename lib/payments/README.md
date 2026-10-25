@@ -1,102 +1,68 @@
-# B2.3 payment backend — test integration, external verification pending
+# B2.3 Xendit test checkout — provider verification pending
 
-Person B owns the payment API, provider adapter, migrations/types and reconciliation runner. B2.3 merged in [PR #36](https://github.com/eloooong/rentify-app/pull/36); B2.4's [paid cancellation/refund extension](REFUNDS.md) merged in [PR #38](https://github.com/eloooong/rentify-app/pull/38). [DECISIONS.md section 7](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo) selects PayMongo Hosted Checkout v2 with GCash, fictional inventory, immutable rent/deposit quotes and test money only. Person B explicitly requested implementation with **no PayMongo account yet**. Local tests do not establish provider activation or end-to-end success.
+Angel selected Xendit on 25 October 2026. This replaces the PayMongo adapter while preserving historical records and the [financial rules](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo). Execution remains disabled until verified. Local tests do not establish genuine gateway success.
 
 ## Contract for Person A
 
-Use the existing session cookies and same-origin mutation rules. Never send prices, currency, renter/owner IDs, provider IDs or a payment-success flag. No frontend changes are included in B2.3.
+HTTP routes, permissions, strict request bodies and DTO fields remain compatible. Use session cookies and same-origin mutations. Never send prices, participant identities, provider IDs or a success flag.
 
-| Method / path                     | Request                                                                                         | Success                                                               |
-| --------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `POST /api/bookings/:id/checkout` | Strict JSON `{policy_version:"demo-payments-v1"}` after showing the rules and obtaining consent | `{data:CheckoutStatus}`; 202 while creation is pending, otherwise 200 |
-| `GET /api/bookings/:id/checkout`  | Verified participant session                                                                    | `{data:CheckoutStatus \| null}`; null means no attempt yet            |
-| `POST /api/payments/webhook`      | Provider's signed raw JSON body, not a browser call                                             | `{received:true}` only after durable inbox insertion                  |
-| `POST /api/payments/reconcile`    | Server `Authorization: Bearer <PAYMENTS_WORKER_SECRET>`                                         | `{claimed,completed}`; one leased job per invocation                  |
+| Method / path                     | Request                                                    | Success                                                    |
+| --------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| `POST /api/bookings/:id/checkout` | Strict `{policy_version:"demo-payments-v1"}` after consent | `{data:CheckoutStatus}`; 202 while creating, otherwise 200 |
+| `GET /api/bookings/:id/checkout`  | Verified participant                                       | `{data:CheckoutStatus \| null}`                            |
+| `POST /api/payments/webhook`      | Xendit callback-token-authenticated JSON                   | `{received:true}` after durable scheduling                 |
+| `POST /api/payments/reconcile`    | Server bearer secret                                       | `{claimed,completed}`                                      |
 
-Private routes verify the email-confirmed user. Starting checkout additionally requires an active renter/profile, an accepted booking with its 30-minute payment window open, eligible owner/published listing, physical availability and a supported quote. A complete policy-version acknowledgement is required. Consent time, actor and version are recorded; the original booking quote/terms are preserved. Participants may read history after suspension; only the active renter receives an open checkout URL. Owners/outsiders cannot obtain that payment capability. Suspended renters receive no URL.
+[Runtime schema](validation.ts): attempt `id`, `booking_id`, state (`creating`, `open`, `paid`, `expired`, `refund_due`, `review`), integer-centavo `rental_amount`, `deposit_amount`, `total_amount`, `refund_due_amount`, `currency:"PHP"`, `method:"gcash"`, `test_mode:true`, `policy_version:"demo-payments-v1"`, `expires_at`, `consented_at`, nullable `checkout_url`. The version represents unchanged financial rules; provider identity is also persisted. Transaction history remains a separate contract.
 
-Display rent and refundable deposit separately. The existing listing deposit is preserved, including zero. Combined amount must fit the payment integer range; total and a nonzero refundable deposit must be at least PHP 1.00, matching the documented refund-resource minimum. Actual GCash/account amount limits still require provider verification; provider rejection never silently changes a quote. The provider request has quantity-one rent/deposit lines, GCash only, no fee pass-through and no receipt email. No card/wallet credentials pass through Rentify.
+Checkout requires an active, verified renter with a complete profile, an eligible accepted booking with its 30-minute payment window open, and an eligible owner/published listing. Show rent/deposit separately, preserve the quote, and obtain consent. PHP total must be 1–100,000; nonzero deposit must be at least PHP 1. Account limits remain unverified; provider rejection never changes a quote.
 
-```ts
-type CheckoutStatus = {
-  id: string; // attempt UUID, not a provider ID
-  booking_id: string;
-  state: "creating" | "open" | "paid" | "expired" | "refund_due" | "review";
-  rental_amount: number;
-  deposit_amount: number;
-  total_amount: number;
-  currency: "PHP";
-  method: "gcash";
-  test_mode: true;
-  policy_version: "demo-payments-v1";
-  expires_at: string;
-  consented_at: string; // timestamps with offsets
-  checkout_url: string | null;
-  refund_due_amount: number;
-};
-```
+Only the eligible renter receives a checkout URL. Owners, outsiders, suspended actors, expired/closed bookings and legacy PayMongo attempts receive no capability. Participants retain private reads. Poll GET while creating; browser redirects never mark paid. Both return URLs point to `/checkout/<stored booking UUID>` on the configured HTTPS origin. The screen now names Xendit.
 
-[Runtime schemas and exported type](validation.ts). All money values are integer centavos. All API responses, including errors, are private/no-store. Missing/inaccessible bookings return a generic 404; no session is 401. Errors use `{error:{code,message,fields?}}`. Strict body/UUID validation is 400, wrong origin/permissions 403, oversized body 413, wrong content type 415. `payment_consent`/`payment_amount` are 400; `payment_closed` is 409; missing configuration is 503 `payments_unavailable`. Other booking eligibility errors follow the [booking contract](../bookings/README.md). Unknown provider/database failures are generic 503 responses without raw payloads or credentials.
+Responses remain private/no-store. Errors use `{error:{code,message,fields?}}`: sign-in 401, inaccessible/missing booking 404, validation/consent/amount 400, permissions/origin 403, closed checkout 409, oversized body 413, wrong content type 415, configuration/provider failures 503. Legacy attempts cannot restart through Xendit.
 
-For `creating`, show processing and poll GET; a repeat POST reuses the same database attempt. For `open`, offer the returned URL if non-null. Newly created provider sessions return to `/checkout/<booking_id>` for both success and cancellation, using the canonical application origin and the stored booking UUID. Neither redirect changes booking state; the merged checkout screen reads the API and does not trust URL flags. Existing provider sessions retain the return URLs with which they were created; do not replace an existing session just to update those URLs. `refund_due` means a financial obligation is recorded, **not** a completed refund. `review` requires operator investigation. A2.4's transaction-history UI still needs its later history contract; this endpoint is a per-booking summary.
+## Provider and persistence
 
-## Server behavior and storage
+Pinned API: `POST /sessions`, `GET /sessions/:id`, `POST /sessions/:id/cancel`, `GET /v3/payments/:id` on `https://api.xendit.co`. Server Basic authentication accepts development keys only; payment resources use `api-version: 2024-11-11`. Sessions use `PAY` / `PAYMENT_LINK`, PH/PHP, GCash only, disabled payment saving, and separate rental/deposit items. No SDK is added.
 
-The migration adds RLS-enabled `checkout_attempts`, `payment_receipts` and `payment_events`. Ordinary clients have no direct grants; deny-all RLS also protects against accidental grants. Authenticated entry points are `prepare_checkout(uuid,text)` and `get_checkout(uuid)`, with identity/participant checks inside definer functions and an empty search path. The internal payload helper and all worker/inbox/synchronization functions are inaccessible to clients. Service role has read grants and explicit worker-function grants. A [server-only client](../supabase/admin.ts) never accepts a browser-provided identity, URL or key.
+Xendit uses PHP major units; adapters convert centavos exactly and reject sub-centavo amounts. Only HTTPS test checkout hosts `dev.xen.to` and `checkout-staging.xendit.co` are accepted. Completed sessions require authenticated captured-payment retrieval and matching business, payment/request IDs, GCash/PH/PHP, succeeded status, amount and capture time before persistence.
 
-There is one attempt per booking. Concurrent POSTs reuse it. Provider creation uses a stable `Idempotency-Key` derived from that attempt and the same fixed quote; a timeout does not cause a new attempt/key. No replacement session is created while the outcome is unknown. Creation-start markers survive crashes. A provider session is bound only after a secret-authenticated provider response matches the internal attempt reference. A signed event can queue a candidate session after a lost creation response; the worker retrieves and verifies it before applying money/status changes.
+New attempts store `provider:"xendit"`. Additive migrations preserve old rows as `provider:"paymongo"`, retain RLS/grants, validate provider-specific IDs, and allocate captures under the correct gateway. Xendit workers exclude legacy attempts and refunds. Old open attempts display review without a link; nothing is relabeled or deleted.
 
-Receipts are unique by provider payment ID. A receipt may allocate rent and deposit once each in `payments`; summing receipt amounts and allocation rows together would double-count. `succeeded` allocation rows mean captured test funds, not earned income or payout eligibility. Incorrect amount/currency/method/time evidence is retained for review without creating a false quote allocation or marking a booking paid. Duplicate deliveries cannot duplicate receipts, allocations or audits. Unknown session references and unexpected alternative sessions are quarantined in the inbox for operator review, not treated as an authorized payment.
+Session creation has no documented idempotency guarantee. The worker persists its creation marker before its sole POST. After an uncertain result, it never creates another session: a matching authenticated callback can supply a candidate ID for provider retrieval. Otherwise operator review is needed. Repeated browser requests reuse the database attempt. [Refunds](REFUNDS.md) keep stable refund idempotency, bounded reads and a separate opt-in.
 
-Synchronization locks the listing, then booking, then attempt. It rechecks eligibility/physical readiness and deadlines. Only a matching test payment confirmed while the server deadline is open can move `accepted -> paid`. If cancellation/expiry wins, the booking stays terminal and the receipt becomes `refund_due`. A delayed callback cannot revive it. B2.4's [separate refund ledger/worker](REFUNDS.md) handles this obligation behind a separate opt-in; confirmed successful refunds reduce the DTO's `refund_due_amount`. No handover, return, completion, deposit-release or owner-payout transition is added.
+Synchronization still locks listing/booking/attempt, prevents duplicate receipts and allocations, and enforces terminal states and the server deadline. Late payments create refund obligations without reviving bookings. Closed sessions are cancelled and retrieved again to resolve races. The provider session may outlast the booking window; the database deadline stays authoritative.
 
-## Webhooks and reconciliation
+## Webhooks
 
-Pinned wire format: `Paymongo-Signature: t=<unix-seconds>,te=<test-hmac>,li=` with HMAC-SHA256 over `timestamp + "." + raw body`, timing-safe comparison and a five-minute timestamp tolerance. Body limit: 256 KiB. Duplicate header keys, invalid signatures, changed raw bytes, live events, and unrecognized envelopes are rejected before financial work. Subscribe only to `checkout_session.payment.paid`.
+Configure **Payment Session – Completed** and **Payment Session – Expired** to `/api/payments/webhook`. Compare `x-callback-token` in constant time, validate the PH/PHP PAY envelope, and durably enqueue retrieval before acknowledgement. Posted amounts are never payment evidence. Refund reconciliation polls authenticated reads; refund callbacks are not required by this implementation.
 
-The accepted event envelope is `{data:{id:"evt_...",type:"event",attributes:{type:"checkout_session.payment.paid",livemode:false,data:{id:"cs_...",type:"checkout_session",attributes:{reference_number:"<attempt UUID>",livemode:false,...}}}}}`. Full provider payloads, billing details and webhook secrets are not stored; the inbox keeps normalized IDs, a body hash and receipt state. Different content under the same event ID is rejected. The webhook persists a scheduling obligation before responding 200; persistence failures return 503. It does not set paid from the posted body.
+Deduplicate merchant/event/session transitions and hash normalized identity without delivery timestamps or customer fields. Changed reference bindings are rejected. Preserve out-of-order/missed-delivery recovery. Raw billing/customer payloads are not stored; body limit remains 256 KiB.
 
-The worker uses authenticated provider retrieval for known sessions even without a webhook. It leases one due attempt for 90 seconds, uses ten-second provider timeouts, and returns only aggregate counts. Scheduling a batch's leases before serial network calls is avoided. Booking cancellation/expiry triggers durable reconciliation scheduling in the same database transaction. Closed reservations cause provider-session expiry and a fresh read; a rejected expiry may indicate a payment in progress and must not cause a replacement charge. Active/unresolved sessions are retried; transient failures retain work and sanitized error codes. Stale worker tokens cannot apply a result.
+## Server configuration
 
-If creation outcome is unknown and the booking has closed without any session reference, the attempt becomes `review`; do not create a new session after expiry. An authentic later event can wake verification of its candidate. If no event arrives, operator investigation using the provider's records is required; never declare an unknown payment absent or refunded. An attempt known to have never contacted the provider can close without a refund. A closed checkout cannot be replaced automatically; a still-unpaid renter can cancel and make a new booking request if needed. No admin repair UI is included. Durable obligations are preserved when the app/runner is offline.
+Save values in ignored local files or deployment secrets. See [`.env.example`](../../.env.example).
 
-## Configuration and operation
+- `XENDIT_SECRET_KEY`: development secret with Money-in Read/Write and required refund access. Production keys are rejected.
+- `XENDIT_WEBHOOK_TOKEN`: test dashboard callback verification token.
+- `XENDIT_RETURN_ORIGIN`: actual HTTPS deployment/tunnel origin; fallback to canonical app origin only when HTTPS. No placeholder is selected automatically.
+- `SUPABASE_SERVICE_ROLE_KEY`: privileged server-only database key.
+- `PAYMENTS_WORKER_SECRET`: at least 32 random characters.
+- `RENTIFY_PAYMENTS_ENABLED=true`: opt-in only after verification.
+- `RENTIFY_REFUNDS_ENABLED=true`: separate refund opt-in after verification.
 
-All new names have placeholders in [.env.example](../../.env.example). Save real values only in ignored `.env.local` or a deployment secret store. Never paste keys into chat, log them, commit them, or use `NEXT_PUBLIC_`:
-
-- `RENTIFY_PAYMENTS_ENABLED=true`: explicit opt-in; absent/false disables provider checkout and webhooks.
-- `PAYMONGO_SECRET_KEY`: test server key only; live/public keys are rejected.
-- `PAYMONGO_WEBHOOK_SECRET`: signing secret for the test webhook endpoint, separate from the API key.
-- `SUPABASE_SERVICE_ROLE_KEY`: privileged server-only Supabase credential for durable payment processing.
-- `PAYMENTS_WORKER_SECRET`: random server-to-server bearer secret, at least 32 characters.
-
-No new dependency is installed. With no PayMongo account, leave payments disabled. B2.4 also requires `RENTIFY_REFUNDS_ENABLED=true` for its separate refund worker; leave that disabled until verified. Authenticated status reads and database/unit tests still work; no public payment-simulation route exists.
-
-After configuring a test account, an HTTPS webhook endpoint and the running app:
-
-```sh
-# One bounded reconciliation invocation; reads .env.local without printing keys.
-npm run payments:worker
-# Local operator loop, one job per pass with a five-second pause; Ctrl+C stops it.
-npm run payments:worker -- --loop
-```
-
-The runner calls the app's protected endpoint and refuses redirects. Do not expose the worker secret to A's browser code. A hosted scheduler/worker must be configured separately for regular reconciliation and monitoring; **none is provisioned or running by this PR**. The database booking-expiry job remains active independently, but it cannot make provider HTTP calls. Before a hosted demo, verify runner uptime, due-work backlog, review/refund obligations and missed-webhook recovery. This setup is not a live-money deployment.
-
-## Verification and handoff gates
+Check HTTPS configuration before persisting consent/attempt state. Genuine testing needs an HTTPS return origin, public HTTPS webhook and running worker. No hosted tunnel, scheduler or worker is provisioned automatically. Existing booking-expiry cron cannot make provider calls.
 
 ```sh
 npm exec -- supabase migration up --local
-npm run db:lint
-npm run db:test
-npm run db:test:payments
-npm test
-# With the local app running at localhost:3000:
-npm run test:payments:http
+npm run payments:worker
+npm run payments:worker -- --loop
 ```
 
-SQL tests cover grants/RLS/private functions. Real Auth tests exercise consent, concurrent attempt creation, private status, leased workers, duplicate events/receipts/allocations, live evidence rejection, amount mismatch, late expiry and payment/cancellation races. Unit tests inject a provider transport; they do not contact PayMongo. HTTP tests use actual SSR cookies for private reads, mass-assignment/origin rejection and forged webhook/worker denial. Scoped fixture cleanup removes only its own accounts/listings/uploads/bookings/payment/audit records, preserving development data.
+## Verification gates
 
-**External checks still pending:** account/test GCash availability; exact v2 create/v1 retrieve/expire compatibility and idempotency behavior; actual signed webhook envelope/header; HTTPS round trip; full/partial test refunds; real worker/scheduler configuration. Official examples differ on event envelopes/signature simplification, so the pinned adapter must be checked against genuine test deliveries before claiming end-to-end integration. Do not weaken validation or switch to live mode to bypass an unsupported test feature. B2.3 stays unchecked in the project checklist until its acceptance gates are met; [B2.4's refund handoff and verification gates](REFUNDS.md) and B3.3/settlement stay separate.
+Run lint, types, unit tests, formatting, build, database lint/SQL/access/concurrency checks, HTTP/browser journeys and generated-type drift checks. Unit transports and server-side database fixtures are synthetic; no public simulator exists.
 
-Primary references: [Hosted Checkout](https://docs.paymongo.com/docs/payment-channels-hosted-checkout), [test quick start](https://docs.paymongo.com/docs/payment-channels-hosted-checkout-quick-start), [get session](https://docs.paymongo.com/reference/get_checkout_sessions), [expire session](https://docs.paymongo.com/reference/expire-a-checkout-session), [checkout lifecycle](https://docs.paymongo.com/docs/payment-channels-key-concepts), [detailed webhook verification](https://docs.paymongo.com/docs/developer-tools-webhook-setup-management), [refund resource](https://docs.paymongo.com/reference/refund-resource).
+Read-only account probes on 25 October 2026 returned **403 REQUEST_FORBIDDEN_ERROR** for session/refund access. Key presence is not proof of permission. Genuine GCash payment, HTTPS callbacks, expiry/cancellation, full/partial refunds, unknown-result recovery and worker operation remain pending. Keep B2.3/B2.4 unchecked until verified. No live money, owner payout or deposit settlement is enabled.
+
+Sources: [create](https://docs.xendit.co/apidocs/create-session), [retrieve](https://docs.xendit.co/apidocs/get-session), [cancel](https://docs.xendit.co/apidocs/cancel-session), [payment](https://docs.xendit.co/apidocs/get-payment), [GCash](https://docs.xendit.co/docs/gcash), [webhooks](https://docs.xendit.co/docs/handling-webhooks), [refund request](https://docs.xendit.co/apidocs/refund-payment-request), [official refund SDK](https://github.com/xendit/xendit-node/blob/master/docs/Refund.md).

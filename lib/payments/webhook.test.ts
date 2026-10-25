@@ -1,93 +1,72 @@
-import { createHmac } from "node:crypto";
 import { expect, it } from "vitest";
 import { signedEvent } from "./webhook";
-const secret = "unit-webhook-secret";
-const timestamp = 1_760_000_000;
+const secret = "unit-webhook-token";
 const event = {
+  event: "payment_session.completed",
+  business_id: "business",
+  created: "2026-10-25T10:00:00Z",
   data: {
-    id: "evt_fixture",
-    type: "event",
-    attributes: {
-      type: "checkout_session.payment.paid",
-      livemode: false,
-      data: {
-        id: "cs_fixture",
-        type: "checkout_session",
-        attributes: {
-          reference_number: "a1000000-0000-4000-8000-000000000001",
-          livemode: false,
-        },
-      },
-    },
+    payment_session_id: "ps-661f87c614802d6c402cd82d",
+    reference_id: "a1000000-0000-4000-8000-000000000001",
+    business_id: "business",
+    session_type: "PAY",
+    currency: "PHP",
+    country: "PH",
+    mode: "PAYMENT_LINK",
   },
 };
-function fixture(value: unknown = event) {
-  const raw = Buffer.from(JSON.stringify(value));
-  const digest = createHmac("sha256", secret)
-    .update(`${timestamp}.`)
-    .update(raw)
-    .digest("hex");
-  return { raw, header: `t=${timestamp},te=${digest},li=` };
-}
-it("verifies exact raw bytes and extracts only the durable inbox fields", () => {
-  const f = fixture();
-  expect(signedEvent(f.raw, f.header, secret, timestamp * 1000)).toMatchObject({
-    id: "evt_fixture",
-    session: "cs_fixture",
-    reference: event.data.attributes.data.attributes.reference_number,
+const raw = (value: unknown = event) => Buffer.from(JSON.stringify(value));
+it("authenticates the callback token and extracts only normalized durable identity", () => {
+  expect(signedEvent(raw(), secret, secret)).toMatchObject({
+    id: expect.stringMatching(/^xevt_[a-f0-9]{64}$/),
+    hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    session: event.data.payment_session_id,
+    reference: event.data.reference_id,
   });
-  expect(signedEvent(f.raw, f.header, secret, timestamp * 1000).hash).toMatch(
-    /^[0-9a-f]{64}$/,
-  );
 });
-it.each([
-  null,
-  "",
-  `t=${timestamp},te=bad,li=`,
-  `t=${timestamp},te=${"a".repeat(64)},li=`,
-  `t=${timestamp},te=${"a".repeat(64)},te=${"a".repeat(64)}`,
-])("rejects missing, malformed, duplicate or invalid signatures", (header) => {
-  expect(() =>
-    signedEvent(fixture().raw, header, secret, timestamp * 1000),
-  ).toThrow();
-});
-it("rejects changed bytes, stale/future signatures and live mode", () => {
-  const f = fixture();
-  expect(() =>
+it.each([null, "", "wrong", secret + "," + secret])(
+  "rejects missing, wrong and duplicated tokens: %s",
+  (token) => expect(() => signedEvent(raw(), token, secret)).toThrow(),
+);
+it("deduplicates retries despite changed timestamps or ignored customer fields", () => {
+  const withoutBusiness = { ...event.data, business_id: undefined };
+  expect(
+    signedEvent(raw({ ...event, data: withoutBusiness }), secret, secret),
+  ).toEqual(signedEvent(raw(), secret, secret));
+  expect(
     signedEvent(
-      Buffer.concat([f.raw, Buffer.from(" ")]),
-      f.header,
+      raw({ ...event, created: "2026-10-25T11:00:00Z", private: "ignored" }),
       secret,
-      timestamp * 1000,
+      secret,
     ),
-  ).toThrow();
-  for (const delta of [-301, 301])
-    expect(() =>
-      signedEvent(f.raw, f.header, secret, (timestamp + delta) * 1000),
-    ).toThrow();
-  expect(() =>
-    signedEvent(f.raw, f.header + "extra", secret, timestamp * 1000),
-  ).toThrow();
-  const live = structuredClone(event);
-  live.data.attributes.livemode = true;
-  const g = fixture(live);
-  expect(() =>
-    signedEvent(g.raw, g.header, secret, timestamp * 1000),
-  ).toThrow();
+  ).toEqual(signedEvent(raw(), secret, secret));
+  expect(
+    signedEvent(
+      raw({ ...event, event: "payment_session.expired" }),
+      secret,
+      secret,
+    ).id,
+  ).not.toBe(signedEvent(raw(), secret, secret).id);
 });
-it("does not accept alternate undocumented envelopes or success-redirect payloads", () => {
+it("rejects altered resource references, wrong business, wrong envelope and wrong country", () => {
   for (const value of [
     { paid: true },
-    {
-      data: {
-        type: "checkout_session.payment.paid",
-        data: event.data.attributes.data,
-      },
-    },
-  ]) {
-    const f = fixture(value);
-    expect(() =>
-      signedEvent(f.raw, f.header, secret, timestamp * 1000),
-    ).toThrow();
-  }
+    { ...event, event: "payment.capture" },
+    { ...event, data: { ...event.data, business_id: "other" } },
+    { ...event, data: { ...event.data, country: "ID" } },
+  ])
+    expect(() => signedEvent(raw(value), secret, secret)).toThrow();
+  expect(
+    signedEvent(
+      raw({
+        ...event,
+        data: {
+          ...event.data,
+          reference_id: "b1000000-0000-4000-8000-000000000001",
+        },
+      }),
+      secret,
+      secret,
+    ).hash,
+  ).not.toBe(signedEvent(raw(), secret, secret).hash);
 });

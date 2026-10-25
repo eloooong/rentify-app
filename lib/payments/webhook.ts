@@ -1,59 +1,44 @@
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-
+import { sessionId } from "./xendit";
 const event = z.object({
+  event: z.enum(["payment_session.completed", "payment_session.expired"]),
+  business_id: z.string().min(1),
   data: z.object({
-    id: z.string().regex(/^evt_[A-Za-z0-9]+$/),
-    type: z.literal("event"),
-    attributes: z.object({
-      type: z.literal("checkout_session.payment.paid"),
-      livemode: z.literal(false),
-      data: z.object({
-        id: z.string().regex(/^cs_[A-Za-z0-9]+$/),
-        type: z.literal("checkout_session"),
-        attributes: z.object({
-          reference_number: z.uuid(),
-          livemode: z.literal(false),
-        }),
-      }),
-    }),
+    payment_session_id: sessionId,
+    reference_id: z.uuid(),
+    business_id: z.string().min(1).optional(),
+    session_type: z.literal("PAY"),
+    currency: z.literal("PHP"),
+    country: z.literal("PH"),
+    mode: z.literal("PAYMENT_LINK"),
   }),
 });
-export function signedEvent(
-  raw: Buffer,
-  header: string | null,
-  secret: string,
-  now = Date.now(),
-) {
-  // Deliberately pin the detailed timestamp.test-signature format; no unsigned fallback.
-  if (!secret || !header || header.length > 1024)
-    throw new Error("Invalid webhook signature.");
-  const pairs = header.split(",").map((entry) => entry.trim().split("="));
+export function signedEvent(raw: Buffer, token: string | null, secret: string) {
   if (
-    pairs.some((entry) => entry.length !== 2) ||
-    new Set(pairs.map(([key]) => key)).size !== pairs.length
+    !secret ||
+    !token ||
+    token.length > 1024 ||
+    Buffer.byteLength(token) !== Buffer.byteLength(secret) ||
+    !timingSafeEqual(Buffer.from(token), Buffer.from(secret))
   )
-    throw new Error("Invalid webhook signature.");
-  const values = Object.fromEntries(pairs);
-  if (
-    !/^\d{10}$/.test(values.t ?? "") ||
-    !/^[0-9a-f]{64}$/.test(values.te ?? "") ||
-    (values.li ?? "") !== "" ||
-    Object.keys(values).some((key) => !["t", "te", "li"].includes(key)) ||
-    Math.abs(now / 1000 - Number(values.t)) > 300
-  )
-    throw new Error("Invalid webhook signature.");
-  const expected = createHmac("sha256", secret)
-    .update(`${values.t}.`)
-    .update(raw)
-    .digest();
-  if (!timingSafeEqual(expected, Buffer.from(values.te, "hex")))
-    throw new Error("Invalid webhook signature.");
+    throw new Error("Invalid webhook token.");
   const parsed = event.parse(JSON.parse(raw.toString("utf8")));
+  if (parsed.data.business_id && parsed.business_id !== parsed.data.business_id)
+    throw new Error("Invalid webhook business.");
+  // Delivery timestamps may change on retries; deduplicate the resource transition.
+  const id = createHash("sha256")
+    .update(
+      `${parsed.business_id}:${parsed.event}:${parsed.data.payment_session_id}`,
+    )
+    .digest("hex");
+  const hash = createHash("sha256")
+    .update(`${id}:${parsed.data.reference_id}`)
+    .digest("hex");
   return {
-    id: parsed.data.id,
-    session: parsed.data.attributes.data.id,
-    reference: parsed.data.attributes.data.attributes.reference_number,
-    hash: createHash("sha256").update(raw).digest("hex"),
+    id: `xevt_${id}`,
+    session: parsed.data.payment_session_id,
+    reference: parsed.data.reference_id,
+    hash,
   };
 }
