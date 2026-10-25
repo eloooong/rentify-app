@@ -9,6 +9,10 @@ import {
   refundStatus,
   type RefundStatus,
 } from "@/lib/payments/refund-validation";
+import {
+  historySchema,
+  type Transaction,
+} from "@/lib/payments/history-validation";
 import { checkoutStatus, type CheckoutStatus } from "@/lib/payments/validation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -16,6 +20,7 @@ import {
   type BookingRole,
   type BookingsQuery,
 } from "./booking-status";
+import { HISTORY_PAGE_SIZE, type HistoryQuery } from "./history";
 
 /*
  * Server-side reads for the bookings dashboards (A2.2). They call the same
@@ -169,4 +174,70 @@ export async function getMyRefunds(id: string): Promise<RefundStatus> {
   const status = refundStatus.safeParse(data);
   if (!status.success) throw new Error("Unexpected refund status response.");
   return status.data;
+}
+
+export type HistoryItem = Transaction & {
+  /** Null when the listing is no longer visible to this participant. */
+  listingTitle: string | null;
+};
+
+export type HistoryPage = {
+  items: HistoryItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
+
+/** A history read failure; `code` is B's RPC error or "unavailable". */
+export class HistoryError extends Error {
+  constructor(readonly code: string) {
+    super(`Unable to load transaction history (${code}).`);
+  }
+}
+
+/**
+ * The signed-in user's payments and refund attempts. Uses B's
+ * list_payment_history RPC, the same call as GET /api/payments/history
+ * (lib/payments/HISTORY.md). Callers check the date range first.
+ */
+export async function listMyHistory(query: HistoryQuery): Promise<HistoryPage> {
+  const client = await createClient();
+  const { data, error } = await client.rpc("list_payment_history", {
+    ...(query.type ? { p_type: query.type } : {}),
+    p_role: query.role,
+    ...(query.from ? { p_from: query.from } : {}),
+    ...(query.to ? { p_to: query.to } : {}),
+    p_page: query.page,
+    p_page_size: HISTORY_PAGE_SIZE,
+  });
+  if (error)
+    throw new HistoryError(
+      error.message === "forbidden" || error.message === "invalid_query"
+        ? error.message
+        : "unavailable",
+    );
+  const history = historySchema.safeParse(data);
+  if (!history.success) throw new HistoryError("unavailable");
+
+  const rows = history.data.data;
+  const listingIds = [...new Set(rows.map((row) => row.listing_id))];
+  const titles = new Map<string, string>();
+  if (listingIds.length > 0) {
+    // Same RLS as the dashboard: a renter may no longer see a paused listing.
+    const listings = await client
+      .from("listings")
+      .select("id,title")
+      .in("id", listingIds);
+    if (listings.error) throw new HistoryError("unavailable");
+    for (const row of listings.data) titles.set(row.id, row.title);
+  }
+  return {
+    items: rows.map((row) => ({
+      ...row,
+      listingTitle: titles.get(row.listing_id) ?? null,
+    })),
+    page: history.data.pagination.page,
+    pageSize: history.data.pagination.pageSize,
+    total: history.data.pagination.total,
+  };
 }

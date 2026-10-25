@@ -45,11 +45,16 @@ export default async function BookingsPage(props: PageProps<"/bookings">) {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6">
-      <div>
-        <h1 className="text-3xl font-semibold text-fg">Bookings</h1>
-        <p className="mt-1 text-muted-foreground">
-          Requests you&apos;ve sent and requests for your listings.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold text-fg">Bookings</h1>
+          <p className="mt-1 text-muted-foreground">
+            Requests you&apos;ve sent and requests for your listings.
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/bookings/history">Transaction history</Link>
+        </Button>
       </div>
 
       <nav aria-label="Booking side" className="border-b border-border">
