@@ -2,6 +2,8 @@
 
 Angel selected Xendit on 25 October 2026. This replaces the PayMongo adapter while preserving historical records and the [financial rules](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo). The migration merged in [PR #43](https://github.com/eloooong/rentify-app/pull/43). Core sandbox checkout/callback/refund checks passed; remaining external gates are listed below.
 
+The participant [transaction-history contract](HISTORY.md) is implemented in the current task branch; integrate after its PR merges.
+
 ## Contract for Person A
 
 HTTP routes, permissions, strict request bodies and DTO fields remain compatible. Use session cookies and same-origin mutations. Never send prices, participant identities, provider IDs or a success flag.
@@ -71,10 +73,10 @@ On 25 October 2026, B verified the actual Xendit Test Mode account:
 - Authenticated paid cancellation recorded the PHP 4,250 obligation. The refund worker submitted once, observed pending, then confirmed succeeded through authenticated reads. Private status reported 425,000 centavos refunded and zero outstanding.
 - A separate genuine unpaid session was cancelled through the app. The worker retrieved Xendit status CANCELED and persisted checkout state expired without a receipt.
 
-The temporary Cloudflare Quick Tunnel used for verification has stopped. Its two test callback URLs were removed, local app origin was restored to http://localhost:3000, and both local payment execution flags were returned to false. Test keys and verification token remain in ignored configuration. A new stable HTTPS origin, registered callbacks and a running worker are required before re-enabling checkout/refunds.
+A separate hosted test environment is now configured at https://rentify-test-blush.vercel.app with its own Singapore Supabase database, Production-only server secrets, exact Auth redirects and persistent Xendit Test Mode callbacks. Supabase Cron invokes the two authenticated reconciliation endpoints every minute; consecutive HTTP 200 results and empty transport queues were observed. Local payment execution remains disabled. See [test environment and rollback](../../supabase/TEST-ENVIRONMENT.md).
 
 A separate PHP 100 GCash Test Mode payment completed through Xendit's hosted eWallet simulator. The production refund adapter submitted PHP 25 and, only after authenticated success, the remaining PHP 75. Both moved from pending to succeeded; authenticated list and individual retrieval matched references and amounts, and the total exactly equaled the PHP 100 capture. This is gateway capability verification; the public app still creates full remaining refunds only, and its partial-ledger regression remains synthetic.
 
-Genuine expired-event delivery, provider failure/unknown-outcome scenarios and durable hosted worker operation remain unverified. Keep B2.3/B2.4 unchecked until remaining gates pass. No live money, owner payout or deposit settlement is enabled.
+Genuine expired callbacks passed for both an ordinary session and one whose successful create response was deliberately lost. Both produced one processed event and an expired checkout; the unknown create sent one POST only and recovered through the callback/provider read. A separate PHP 100 refund whose accepted response was lost was discovered by reference and confirmed succeeded with one provider refund. These controlled transport faults used the production workers/adapters and real test resources, without a public simulator. Provider-confirmed failed-refund recovery remains open: the documented GCash PHP 10302 scenario has no returned refund resource; its obligation is retained for review, never declared refunded or released based on absence. Keep B2.3/B2.4 unchecked until remaining gates pass. No live money, owner payout or deposit settlement is enabled.
 
 Sources: [create](https://docs.xendit.co/apidocs/create-session), [retrieve](https://docs.xendit.co/apidocs/get-session), [cancel](https://docs.xendit.co/apidocs/cancel-session), [payment](https://docs.xendit.co/apidocs/get-payment), [GCash](https://docs.xendit.co/docs/gcash), [webhooks](https://docs.xendit.co/docs/handling-webhooks), [refund request](https://docs.xendit.co/apidocs/refund-payment-request), [official refund SDK](https://github.com/xendit/xendit-node/blob/master/docs/Refund.md).

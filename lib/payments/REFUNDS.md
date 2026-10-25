@@ -1,6 +1,6 @@
 # B2.4 paid cancellation and refunds — test mode, provider verification pending
 
-Person B owns this backend. [Selected policies](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo) remain unchanged. B2.3 merged in [PR #36](https://github.com/eloooong/rentify-app/pull/36). Xendit replaces PayMongo for new attempts. [PR #43](https://github.com/eloooong/rentify-app/pull/43) merged the migration. Money-in permissions now work; controlled local checkout and full-refund verification passed on 25 October 2026. Historical PayMongo obligations are excluded from Xendit workers. Full and partial refund capability passed; remaining external failure/recovery gates are still pending; see the [verification record](README.md#verification-gates).
+Person B owns this backend. [Selected policies](../../DECISIONS.md#7-payment-defaults-selected-for-the-demo) remain unchanged. B2.3 merged in [PR #36](https://github.com/eloooong/rentify-app/pull/36). Xendit replaces PayMongo for new attempts. [PR #43](https://github.com/eloooong/rentify-app/pull/43) merged the migration. Money-in permissions now work; controlled local checkout and full-refund verification passed on 25 October 2026. Historical PayMongo obligations are excluded from Xendit workers. Full and partial refund capability passed; hosted expiry and response-loss recovery also passed; provider-confirmed failed-refund verification remains pending; see the [verification record](README.md#verification-gates).
 
 ## Contract for Person A
 
@@ -88,3 +88,11 @@ npm run test:refunds:http
 ```
 
 SQL checks cover grants/RLS/private helpers. Real Auth/RPC tests exercise participant denial, suspended actors, exact Manila cutoff, idempotent/concurrent cancellation, capped remaining amounts, lease fencing, pending/processing/success, bounded confirmed-failure retries, ambiguous recovery and late/duplicate capture obligations. Unit tests use injected provider transport only. HTTP tests use real SSR session cookies and isolated synthetic capture evidence to verify paid cancellation, read privacy, origin/extra-field rejection and worker denial. Scoped cleanup touches only its own namespace. These checks do not replace the remaining genuine Xendit verification; B2.3/B2.4 stay unchecked until their handoff and external gates pass.
+
+## Hosted verification follow-up
+
+A separate hosted test environment is now configured at https://rentify-test-blush.vercel.app with its own Singapore Supabase database, Production-only server secrets, exact Auth redirects and persistent Xendit Test Mode callbacks. Supabase Cron invokes the two authenticated reconciliation endpoints every minute; consecutive HTTP 200 results and empty transport queues were observed. Local payment execution remains disabled. See [test environment and rollback](../../supabase/TEST-ENVIRONMENT.md).
+
+Genuine expired callbacks passed for both an ordinary session and one whose successful create response was deliberately lost. Both produced one processed event and an expired checkout; the unknown create sent one POST only and recovered through the callback/provider read. A separate PHP 100 refund whose accepted response was lost was discovered by reference and confirmed succeeded with one provider refund. These controlled transport faults used the production workers/adapters and real test resources, without a public simulator.
+
+The documented PHP 10302 GCash failure fixture has no authenticated refund resource. Its full obligation is retained; no unknown result is reclassified as confirmed failure. Provider-confirmed FAILED and bounded retry acceptance remain open. Local regression tests cover those transitions with isolated evidence.

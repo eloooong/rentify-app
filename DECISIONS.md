@@ -167,3 +167,7 @@ A separate PHP 100 GCash Test Mode payment completed through Xendit's hosted eWa
 Genuine expired-event delivery, provider failure/unknown-outcome scenarios and durable hosted worker operation remain unverified. Keep B2.3/B2.4 unchecked until remaining gates pass. No live money, owner payout or deposit settlement is enabled.
 
 Existing PayMongo records retain their identity and are excluded from Xendit workers; legacy obligations require provider-specific review. The consent version describes unchanged financial rules, with provider identity stored on new attempts.
+
+### Separate hosted test environment and recovery follow-up
+
+Angel approved creating a separate test environment in Arc Reactor at the quoted $0/month, and explicitly approved Production-only secrets, test callbacks and a scoped Vault worker token. The [environment record](supabase/TEST-ENVIRONMENT.md) documents the stable HTTPS app and minute-based workers. Both genuine expired callbacks and transport-response-loss recovery passed for sessions/refunds. The PHP 10302 failure fixture retains an unresolved obligation; provider-confirmed failure/retry verification remains open. These are sandbox capabilities and do not change financial policies.

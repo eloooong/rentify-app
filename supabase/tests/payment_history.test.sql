@@ -1,0 +1,15 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path=public,extensions;
+select no_plan();
+select ok(has_function_privilege('authenticated','public.list_payment_history(text,text,date,date,integer,integer)','EXECUTE'),'Participants have history RPC');
+select ok(not has_function_privilege('anon','public.list_payment_history(text,text,date,date,integer,integer)','EXECUTE'),'Anonymous history denied');
+select ok(not has_table_privilege('authenticated','public.payment_receipts','SELECT'),'History adds no direct receipt reads');
+select ok(not has_table_privilege('authenticated','public.refund_attempts','SELECT'),'History adds no direct refund reads');
+select ok(not has_table_privilege('authenticated','public.payments','SELECT'),'History adds no allocation reads');
+select ok(exists(select 1 from pg_extension where extname='pg_net'),'Scheduler transport installed');
+set local role authenticated;
+select throws_ok($$select public.list_payment_history()$$,'42501','forbidden','A role without an identity cannot read history');
+reset role;
+select * from finish();
+rollback;
