@@ -1091,6 +1091,17 @@ export type Database = {
         };
         Returns: Json;
       };
+      list_payment_history: {
+        Args: {
+          p_from?: string;
+          p_page?: number;
+          p_page_size?: number;
+          p_role?: string;
+          p_to?: string;
+          p_type?: string;
+        };
+        Returns: Json;
+      };
       paid_cancellation_allowed: {
         Args: {
           actor: string;
