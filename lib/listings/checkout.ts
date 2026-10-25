@@ -18,7 +18,7 @@ export const POLL_ATTEMPTS = 15;
 
 /** The rules shown before consent (DECISIONS.md section 7, demo defaults). */
 export const PAYMENT_RULES: string[] = [
-  "This is a test payment with GCash on PayMongo's page. No real money moves, and Rentify never sees your GCash details.",
+  "This is a test payment with GCash on Xendit's page. No real money moves, and Rentify never sees your GCash details.",
   "You pay the rent and the refundable deposit together, as two separate lines. Rentify adds no fees.",
   "Pay within 30 minutes of the owner accepting. If the window closes first, the dates are released and you'll need to send a new request.",
   "If either of you cancels before 00:00 (Manila time) on the pickup date, you get back 100% of the rent and deposit.",

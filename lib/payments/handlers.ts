@@ -4,21 +4,22 @@ import { getAppOrigin } from "@/lib/auth/config";
 import { api, ApiError, jsonBody, limitedBody } from "@/lib/catalog/http";
 import { bookingError } from "@/lib/bookings/errors";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { paymongoProvider } from "./provider";
+import { xenditProvider } from "./provider";
 import { runPaymentWork } from "./work";
 import { signedEvent } from "./webhook";
 import { checkoutInput, checkoutStatus } from "./validation";
 import { workerAuthorized } from "./worker-auth";
+import { paymentReturnOrigin } from "./xendit";
 
 function provider() {
-  const secret = process.env.PAYMONGO_SECRET_KEY;
+  const secret = process.env.XENDIT_SECRET_KEY;
   if (!secret || process.env.RENTIFY_PAYMENTS_ENABLED !== "true")
     throw new ApiError(
       503,
       "payments_unavailable",
       "Test checkout is not configured.",
     );
-  return paymongoProvider(secret);
+  return xenditProvider(secret);
 }
 function paymentError(error: { code?: string; message?: string } | null) {
   if (!error) return;
@@ -67,6 +68,7 @@ export function checkout(request: NextRequest, booking: string) {
     }
     const input = checkoutInput.parse(await jsonBody(request));
     const gateway = provider();
+    const origin = paymentReturnOrigin(getAppOrigin());
     // Configuration is checked before creating consent/attempt state. No privileged client identity is accepted.
     const admin = createAdminClient();
     const prepared = await client.rpc("prepare_checkout", {
@@ -75,7 +77,7 @@ export function checkout(request: NextRequest, booking: string) {
     });
     paymentError(prepared.error);
     const initial = decoded(prepared.data)!;
-    await runPaymentWork(admin, gateway, getAppOrigin(), initial.id);
+    await runPaymentWork(admin, gateway, origin, initial.id);
     const result = await client.rpc("get_checkout", { p_booking: booking });
     paymentError(result.error);
     const data = decoded(result.data)!;
@@ -96,7 +98,7 @@ function privateResponse(body: unknown, status = 200) {
 }
 export async function webhook(request: NextRequest) {
   try {
-    const secret = process.env.PAYMONGO_WEBHOOK_SECRET;
+    const secret = process.env.XENDIT_WEBHOOK_TOKEN;
     if (process.env.RENTIFY_PAYMENTS_ENABLED !== "true" || !secret)
       return privateResponse(
         {
@@ -117,11 +119,7 @@ export async function webhook(request: NextRequest) {
     const raw = await limitedBody(request, 262144);
     let event: ReturnType<typeof signedEvent>;
     try {
-      event = signedEvent(
-        raw,
-        request.headers.get("paymongo-signature"),
-        secret,
-      );
+      event = signedEvent(raw, request.headers.get("x-callback-token"), secret);
     } catch {
       return privateResponse(
         {
@@ -175,7 +173,11 @@ export async function reconcile(request: NextRequest) {
     );
   try {
     return privateResponse(
-      await runPaymentWork(createAdminClient(), provider(), getAppOrigin()),
+      await runPaymentWork(
+        createAdminClient(),
+        provider(),
+        paymentReturnOrigin(getAppOrigin()),
+      ),
     );
   } catch {
     return privateResponse(

@@ -59,7 +59,9 @@ export function safeReturnPath(value: unknown) {
     const url = new URL(value, "https://rentify.invalid");
     if (
       url.origin !== "https://rentify.invalid" ||
-      !isProtectedPath(url.pathname)
+      (!isProtectedPath(url.pathname) &&
+        url.pathname !== "/listings" &&
+        !url.pathname.startsWith("/listings/"))
     )
       return "/account";
     return url.pathname + url.search;

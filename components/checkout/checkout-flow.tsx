@@ -30,7 +30,7 @@ type Props = {
 };
 
 /**
- * Consent, processing, hand-off to PayMongo's hosted page and the result
+ * Consent, processing, hand-off to Xendit's hosted page and the result
  * states (A2.3). Every state comes from GET /api/bookings/:id/checkout;
  * returning from the provider proves nothing by itself.
  */
@@ -51,7 +51,7 @@ export function CheckoutFlow({ booking, total, initialCheckout }: Props) {
   const waiting =
     view.kind === "creating" || (view.kind === "open" && !view.url);
 
-  // While PayMongo's session is being created, poll for its link.
+  // While Xendit's session is being created, poll for its link.
   useEffect(() => {
     if (!waiting || polls >= POLL_ATTEMPTS) return;
     const timer = setTimeout(async () => {
@@ -192,7 +192,7 @@ export function CheckoutFlow({ booking, total, initialCheckout }: Props) {
             : `Continue to GCash test payment · ${money(total)}`}
         </Button>
         <p className="text-xs text-muted-foreground">
-          You&apos;ll pay on PayMongo&apos;s page. Come back here afterwards to
+          You&apos;ll pay on Xendit&apos;s page. Come back here afterwards to
           see the result.
         </p>
       </div>
@@ -254,8 +254,8 @@ export function CheckoutFlow({ booking, total, initialCheckout }: Props) {
           {pending ? "Checking…" : "I've paid. Check the status"}
         </Button>
         <p role="status" className="text-xs text-muted-foreground">
-          Payment is confirmed only when PayMongo tells Rentify, which can take
-          a minute. Don&apos;t pay twice.
+          Payment is confirmed only when Xendit tells Rentify, which can take a
+          minute. Don&apos;t pay twice.
         </p>
         {problemAlert}
       </div>

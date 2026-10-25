@@ -4,6 +4,147 @@ import { test } from "node:test";
 import { data, day, sql, withBookingFixtures } from "./booking-fixtures.mjs";
 
 test(
+  "Xendit namespace validation and legacy PayMongo worker isolation",
+  { timeout: 120_000 },
+  async () => {
+    await withBookingFixtures(async ({ admin, clients, fixtures }) => {
+      const [owner, renter] = clients;
+      const booking = data(
+        await renter.rpc("request_booking", {
+          p_listing: fixtures.listings[0].id,
+          p_pickup: day(12),
+          p_return: day(14),
+          p_request_key: randomUUID(),
+        }),
+      ).booking;
+      data(
+        await owner.rpc("act_on_booking", {
+          p_booking: booking.id,
+          p_action: "accept",
+        }),
+      );
+      const a = data(
+        await renter.rpc("prepare_checkout", {
+          p_booking: booking.id,
+          p_policy: "demo-payments-v1",
+        }),
+      );
+      const job = data(
+        await admin.rpc("claim_payment_work", { p_attempt: a.id, p_limit: 1 }),
+      )[0];
+      assert.equal(job.provider, "xendit");
+      const snapshot = {
+        session_id: `ps-${randomUUID().replaceAll("-", "").slice(0, 24)}`,
+        reference: a.id,
+        checkout_url: "https://dev.xen.to/isolated",
+        status: "active",
+        livemode: false,
+        payments: [],
+      };
+      const sync = (value) =>
+        admin.rpc("sync_checkout", {
+          p_attempt: a.id,
+          p_lease: job.lease_token,
+          p_snapshot: value,
+        });
+      assert.equal(
+        (await sync({ ...snapshot, session_id: "cs_wrongprovider" })).error
+          ?.message,
+        "provider_invalid",
+      );
+      assert.ok(
+        (
+          await sync({
+            ...snapshot,
+            checkout_url: "https://checkout.xendit.co/sessions/live",
+          })
+        ).error,
+      );
+      assert.equal(data(await sync(snapshot)), "open");
+      sql(
+        `update public.checkout_attempts set provider='paymongo',session_id='cs_${a.id.replaceAll("-", "")}',checkout_url='https://checkout.paymongo.com/legacy',next_check_at=clock_timestamp() where id='${a.id}';`,
+      );
+      assert.equal(
+        data(
+          await admin.rpc("claim_payment_work", {
+            p_attempt: a.id,
+            p_limit: 1,
+          }),
+        ).length,
+        0,
+      );
+      const history = data(
+        await renter.rpc("get_checkout", { p_booking: booking.id }),
+      );
+      assert.equal(history.checkout_url, null);
+      assert.equal(history.state, "review");
+      assert.equal(
+        (
+          await renter.rpc("prepare_checkout", {
+            p_booking: booking.id,
+            p_policy: "demo-payments-v1",
+          })
+        ).error?.message,
+        "legacy_booking",
+      );
+      const event = `xevt_${randomUUID().replaceAll("-", "").repeat(2)}`;
+      try {
+        data(
+          await admin.rpc("enqueue_payment_event", {
+            p_event: event,
+            p_session: snapshot.session_id,
+            p_reference: a.id,
+            p_hash: "b".repeat(64),
+          }),
+        );
+        assert.equal(
+          data(
+            await admin
+              .from("checkout_attempts")
+              .select("candidate_session_id")
+              .eq("id", a.id)
+              .single(),
+          ).candidate_session_id,
+          null,
+        );
+      } finally {
+        sql(`delete from public.payment_events where event_id='${event}';`);
+      }
+      // A historical PayMongo refund obligation must never reach the Xendit worker.
+      const receipt = data(
+        await admin
+          .from("payment_receipts")
+          .select("id")
+          .eq("attempt_id", a.id),
+      );
+      assert.equal(receipt.length, 0);
+      sql(
+        `insert into public.payment_receipts(attempt_id,payment_id,amount,currency,method,paid_at,disposition,reason) values('${a.id}','pay_${a.id.replaceAll("-", "")}',100,'PHP','gcash',clock_timestamp(),'refund_due','legacy_fixture');`,
+      );
+      const legacyReceipt = data(
+        await admin
+          .from("payment_receipts")
+          .select("id")
+          .eq("attempt_id", a.id)
+          .single(),
+      );
+      const refund = data(
+        await admin
+          .from("refund_attempts")
+          .select("id")
+          .eq("receipt_id", legacyReceipt.id)
+          .single(),
+      );
+      assert.equal(
+        data(await admin.rpc("claim_refund_work", { p_refund: refund.id }))
+          .length,
+        0,
+      );
+    });
+  },
+);
+
+test(
   "real checkout consent, private status, leased provider truth, duplicate receipts and terminal races",
   { timeout: 120_000 },
   async () => {
@@ -45,15 +186,15 @@ test(
           suffix = randomUUID().replaceAll("-", ""),
         ) {
           return {
-            session_id: job.session_id ?? `cs_${suffix}`,
+            session_id: job.session_id ?? `ps-${suffix.slice(0, 24)}`,
             reference: job.id,
-            checkout_url: `https://checkout.paymongo.com/${suffix}`,
+            checkout_url: `https://dev.xen.to/${suffix}`,
             status: "active",
             livemode: false,
             payments: paid
               ? [
                   {
-                    id: `pay_${suffix}`,
+                    id: `py-${suffix.slice(0, 8)}-${suffix.slice(8, 12)}-${suffix.slice(12, 16)}-${suffix.slice(16, 20)}-${suffix.slice(20)}`,
                     amount: job.total_amount,
                     currency: "PHP",
                     method: "gcash",
@@ -180,7 +321,7 @@ test(
             .update({ account_status: "active" })
             .eq("id", users[1].id),
         );
-        const event = `evt_${randomUUID().replaceAll("-", "")}`;
+        const event = `xevt_${randomUUID().replaceAll("-", "").repeat(2)}`;
         const enqueue = (hash = "a".repeat(64)) =>
           admin.rpc("enqueue_payment_event", {
             p_event: event,
@@ -216,7 +357,7 @@ test(
           2,
           "One provider capture allocated once to rent and deposit",
         );
-        const again = `evt_${randomUUID().replaceAll("-", "")}`;
+        const again = `xevt_${randomUUID().replaceAll("-", "").repeat(2)}`;
         data(
           await admin.rpc("enqueue_payment_event", {
             p_event: again,

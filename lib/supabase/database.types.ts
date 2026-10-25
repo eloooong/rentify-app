@@ -209,6 +209,7 @@ export type Database = {
           lease_until: string | null;
           next_check_at: string | null;
           policy_version: string;
+          provider: string;
           rental_amount: number;
           renter_id: string;
           session_id: string | null;
@@ -232,6 +233,7 @@ export type Database = {
           lease_until?: string | null;
           next_check_at?: string | null;
           policy_version: string;
+          provider?: string;
           rental_amount: number;
           renter_id: string;
           session_id?: string | null;
@@ -253,6 +255,7 @@ export type Database = {
           lease_until?: string | null;
           next_check_at?: string | null;
           policy_version?: string;
+          provider?: string;
           rental_amount?: number;
           renter_id?: string;
           session_id?: string | null;
@@ -1025,6 +1028,7 @@ export type Database = {
           lease_until: string | null;
           next_check_at: string | null;
           policy_version: string;
+          provider: string;
           rental_amount: number;
           renter_id: string;
           session_id: string | null;

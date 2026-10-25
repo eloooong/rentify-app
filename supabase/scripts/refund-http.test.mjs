@@ -64,14 +64,14 @@ test(
               p_attempt: prepared.id,
               p_lease: job.lease_token,
               p_snapshot: {
-                session_id: `cs_${suffix}`,
+                session_id: `ps-${suffix.slice(0, 24)}`,
                 reference: prepared.id,
-                checkout_url: `https://checkout.paymongo.com/${suffix}`,
+                checkout_url: `https://dev.xen.to/${suffix}`,
                 status: "active",
                 livemode: false,
                 payments: [
                   {
-                    id: `pay_${suffix}`,
+                    id: `py-${suffix.slice(0, 8)}-${suffix.slice(8, 12)}-${suffix.slice(12, 16)}-${suffix.slice(16, 20)}-${suffix.slice(20)}`,
                     amount: prepared.total_amount,
                     currency: "PHP",
                     method: "gcash",

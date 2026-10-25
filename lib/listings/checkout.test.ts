@@ -21,7 +21,7 @@ const attempt: CheckoutStatus = {
   policy_version: "demo-payments-v1",
   expires_at: "2026-10-24T15:02:00+00:00",
   consented_at: "2026-10-24T14:40:00+00:00",
-  checkout_url: "https://checkout.paymongo.com/cs_test_123",
+  checkout_url: "https://dev.xen.to/test_123",
   refund_due_amount: 0,
 };
 const accepted = { status: "accepted" as const, is_expired: false };

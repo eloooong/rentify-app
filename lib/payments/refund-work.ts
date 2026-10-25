@@ -22,7 +22,10 @@ export async function runRefundWork(
     try {
       let snapshot: RefundSnapshot;
       if (job.provider_refund_id)
-        snapshot = await provider.retrieve(job.provider_refund_id);
+        snapshot = await provider.retrieve(
+          job.provider_refund_id,
+          job.payment_id,
+        );
       else {
         const refunds = await provider.list(job.payment_id);
         const matching = refunds.filter((r) => r.reference === job.id);

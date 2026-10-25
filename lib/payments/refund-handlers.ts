@@ -9,7 +9,7 @@ import {
   refundStatus,
 } from "./refund-validation";
 import { workerAuthorized } from "./worker-auth";
-import { paymongoRefundProvider } from "./refund-provider";
+import { xenditRefundProvider } from "./refund-provider";
 import { runRefundWork } from "./refund-work";
 
 export function bookingRefunds(request: NextRequest, booking: string) {
@@ -71,7 +71,7 @@ export async function reconcileRefunds(request: NextRequest) {
   if (
     process.env.RENTIFY_PAYMENTS_ENABLED !== "true" ||
     process.env.RENTIFY_REFUNDS_ENABLED !== "true" ||
-    !process.env.PAYMONGO_SECRET_KEY
+    !process.env.XENDIT_SECRET_KEY
   )
     return respond(
       {
@@ -86,7 +86,7 @@ export async function reconcileRefunds(request: NextRequest) {
     return respond(
       await runRefundWork(
         createAdminClient(),
-        paymongoRefundProvider(process.env.PAYMONGO_SECRET_KEY),
+        xenditRefundProvider(process.env.XENDIT_SECRET_KEY),
       ),
     );
   } catch {

@@ -54,6 +54,11 @@ describe("return URL boundary", () => {
     "/login",
     "/auth/confirm",
     "/account/%ZZ",
+    "/listings.evil.example",
+    "/listings-elsewhere",
+    "/listings/%2e%2e/login",
+    "/listings/%5cevil",
+    "/listings?next=%0d%0aLocation:evil",
   ])("rejects an unsafe return value: %s", (value) => {
     expect(safeReturnPath(value)).toBe("/account");
   });
@@ -62,12 +67,17 @@ describe("return URL boundary", () => {
     "/owner/listings/new",
     "/bookings?tab=hosting",
     "/messages/thread-1",
-  ])("keeps a local protected return path: %s", (value) => {
+    "/checkout/a1000000-0000-4000-8000-000000000002",
+    "/listings",
+    "/listings?q=camera&sort=price_asc",
+    "/listings/a1000000-0000-4000-8000-000000000002",
+  ])("keeps an allowed local return path: %s", (value) => {
     expect(safeReturnPath(value)).toBe(value);
   });
   it("matches whole route segments", () => {
     expect(isProtectedPath("/owner/listings/new")).toBe(true);
     expect(isProtectedPath("/ownership")).toBe(false);
     expect(isProtectedPath("/listings")).toBe(false);
+    expect(isProtectedPath("/listings/item")).toBe(false);
   });
 });
