@@ -13,6 +13,7 @@ type MobileMenuProps = {
   account: NavItem;
   myListings: NavItem;
   bookings: NavItem;
+  messages: NavItem;
   lend: NavItem;
 };
 
@@ -25,6 +26,7 @@ export function MobileMenu({
   account,
   myListings,
   bookings,
+  messages,
   lend,
 }: MobileMenuProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -85,6 +87,9 @@ export function MobileMenu({
                 <>
                   <li className="[&>a]:flex [&>a]:min-h-11 [&>a]:items-center">
                     <NavLink href={bookings.href}>{bookings.label}</NavLink>
+                  </li>
+                  <li className="[&>a]:flex [&>a]:min-h-11 [&>a]:items-center">
+                    <NavLink href={messages.href}>{messages.label}</NavLink>
                   </li>
                   <li className="[&>a]:flex [&>a]:min-h-11 [&>a]:items-center">
                     <NavLink href={myListings.href}>{myListings.label}</NavLink>

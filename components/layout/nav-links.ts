@@ -16,6 +16,8 @@ export const myListingsLink: NavItem = {
 
 export const bookingsLink: NavItem = { href: "/bookings", label: "Bookings" };
 
+export const messagesLink: NavItem = { href: "/messages", label: "Messages" };
+
 export const lendLink: NavItem = { href: "/owner/listings/new", label: "Lend" };
 
 // Terms, Privacy and Prohibited items pages are built in A3.4 under app/help.

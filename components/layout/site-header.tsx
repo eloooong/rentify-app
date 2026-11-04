@@ -7,6 +7,7 @@ import {
   accountLink,
   bookingsLink,
   lendLink,
+  messagesLink,
   myListingsLink,
   primaryLinks,
   signInLink,
@@ -33,6 +34,7 @@ export async function SiteHeader() {
           account={accountLink}
           myListings={myListingsLink}
           bookings={bookingsLink}
+          messages={messagesLink}
           lend={lendLink}
         />
 
@@ -75,6 +77,7 @@ export async function SiteHeader() {
           {user ? (
             <>
               <NavLink href={bookingsLink.href}>{bookingsLink.label}</NavLink>
+              <NavLink href={messagesLink.href}>{messagesLink.label}</NavLink>
               <NavLink href={myListingsLink.href}>
                 {myListingsLink.label}
               </NavLink>
