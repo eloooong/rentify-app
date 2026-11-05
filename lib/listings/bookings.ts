@@ -52,7 +52,7 @@ export type BookingsPage = {
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
-async function withDetails(
+export async function withDetails(
   client: Client,
   userId: string,
   bookings: Booking[],

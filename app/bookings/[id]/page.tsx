@@ -6,6 +6,7 @@ import { BookingActions } from "@/components/bookings/booking-actions";
 import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
 import { PaidCancellation } from "@/components/bookings/paid-cancellation";
 import { RefundStatusPanel } from "@/components/bookings/refund-status";
+import { OpenChatButton } from "@/components/chat/open-chat-button";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
 import { formatDate } from "@/lib/listings/booking-dates";
@@ -114,6 +115,11 @@ export default async function BookingDetailPage(
             </Link>
           </Button>
         )}
+        <OpenChatButton
+          bookingId={booking.id}
+          label={owner ? "Message the renter" : "Message the owner"}
+          returnTo={returnTo}
+        />
         <BookingActions
           bookingId={booking.id}
           actions={booking.allowed_actions}
