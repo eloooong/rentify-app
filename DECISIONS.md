@@ -171,3 +171,11 @@ Existing PayMongo records retain their identity and are excluded from Xendit wor
 ### Separate hosted test environment and recovery follow-up
 
 Angel approved creating a separate test environment in Arc Reactor at the quoted $0/month, and explicitly approved Production-only secrets, test callbacks and a scoped Vault worker token. The [environment record](supabase/TEST-ENVIRONMENT.md) documents the stable HTTPS app and minute-based workers. Both genuine expired callbacks and transport-response-loss recovery passed for sessions/refunds. The PHP 10302 failure fixture retains an unresolved obligation; provider-confirmed failure/retry verification remains open. These are sandbox capabilities and do not change financial policies.
+
+## 9. Reviews for the demo
+
+On 5 November 2026, Angel selected **publish each review immediately** for the MVP, with one immutable review per participant per completed booking, a 1–5-star rating and optional text. Person A's separate approval is not recorded.
+
+Only an active, email-verified participant with a profile may submit; the server derives the author and the other participant being reviewed. No pre-completion review, self-review, user edit/deletion or double-blind delay is enabled. There is no submission deadline in this slice. Public reviews contain public author/subject IDs, author display name, booking-side role, rating, plain-text comment and creation time; private booking IDs/dates and contact/payment data are excluded. Comments are capped at 2,000 Unicode characters. Existing reviews remain public after account suspension or listing changes; an inactive counterparty does not silence an eligible author. Admin reporting/moderation remains B3.4.
+
+The completed status must come from the later approved lifecycle; this feature cannot complete a rental or settle a deposit. [Review contract](lib/reviews/README.md).

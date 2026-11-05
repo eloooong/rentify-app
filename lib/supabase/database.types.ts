@@ -912,8 +912,9 @@ export type Database = {
           rating: number;
           subject_id: string;
           updated_at: string;
+          review_json: Json | null;
         };
-        ComputedFields: never;
+        ComputedFields: "review_json";
         Insert: {
           author_id: string;
           booking_id: string;
@@ -1099,6 +1100,7 @@ export type Database = {
       };
       get_booking: { Args: { p_booking: string }; Returns: Json };
       get_booking_refunds: { Args: { p_booking: string }; Returns: Json };
+      get_booking_review: { Args: { p_booking: string }; Returns: Json };
       get_checkout: { Args: { p_booking: string }; Returns: Json };
       is_public_listing: { Args: { listing: string }; Returns: boolean };
       list_chat_messages: {
@@ -1130,6 +1132,15 @@ export type Database = {
           p_role?: string;
           p_to?: string;
           p_type?: string;
+        };
+        Returns: Json;
+      };
+      list_profile_reviews: {
+        Args: {
+          p_page?: number;
+          p_page_size?: number;
+          p_role?: string;
+          p_subject: string;
         };
         Returns: Json;
       };
@@ -1185,6 +1196,15 @@ export type Database = {
         };
         Returns: Json;
       };
+      review_json: {
+        Args: {
+          r: Omit<
+            Database["public"]["Tables"]["reviews"]["Row"],
+            Database["public"]["Tables"]["reviews"]["ComputedFields"]
+          >;
+        };
+        Returns: Json;
+      };
       save_my_profile: {
         Args: { p_display_name: string; p_phone?: string };
         Returns: undefined;
@@ -1200,6 +1220,10 @@ export type Database = {
       start_refund_creation: {
         Args: { p_lease: string; p_refund: string };
         Returns: undefined;
+      };
+      submit_booking_review: {
+        Args: { p_booking: string; p_comment?: string; p_rating: number };
+        Returns: Json;
       };
       sync_checkout: {
         Args: { p_attempt: string; p_lease: string; p_snapshot: Json };
