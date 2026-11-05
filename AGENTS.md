@@ -32,6 +32,7 @@ These paths describe Person B's Windows environment; verify availability on othe
 - State a short plan and exact file scope before editing. Resolve routine choices within the authorized task; ask only about material missing requirements or approval not already provided.
 - Edit only the agreed scope and coordinate before touching another person's files. If scope must expand, explain the dependency and agree the handoff before editing that area.
 - Use a short-lived task branch from updated `main`, small Conventional Commits, and PRs. Do not work on the same branch as the other person or discard their edits to resolve a conflict.
+- For commits created with Codex, retain the human Git author and add `Co-authored-by: Codex <codex@openai.com>` as a commit-message trailer after a blank line. Apply this only when Codex contributed; do not add it to human-only or Claude-only work, or rewrite published history just to add attribution.
 - One person edits a shared file at a time. Announce dependency/configuration/schema changes. B coordinates package and lockfile changes; obtain approval for additions outside the authorized task.
 - B owns migrations and generated database types. Keep one migration PR open at a time, never modify an applied migration, and regenerate/commit types after schema changes.
 - Publish schema/API contracts before integration: field names, date semantics, statuses, function signatures, response/error shapes, and access rules. A may use clearly labeled mocks in A's folders until the contract implementation merges.
