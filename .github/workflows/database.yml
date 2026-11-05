@@ -13,6 +13,8 @@ on:
       - lib/payments/**
       - lib/chat/**
       - lib/notifications/**
+      - lib/reviews/**
+      - app/api/profiles/**
       - app/api/catalog/**
       - app/api/bookings/**
       - app/api/payments/**
@@ -44,6 +46,8 @@ on:
       - lib/payments/**
       - lib/chat/**
       - lib/notifications/**
+      - lib/reviews/**
+      - app/api/profiles/**
       - app/api/catalog/**
       - app/api/bookings/**
       - app/api/payments/**
@@ -109,6 +113,8 @@ jobs:
         run: npm run db:test:history
       - name: Test chat, notifications and real Realtime access boundaries
         run: npm run db:test:chat
+      - name: Test completed-only public reviews, immutable retries and privacy
+        run: npm run db:test:reviews
       - name: Test local demo seed, preservation, privacy, and scoped reset
         run: npm run db:demo:test
       - name: Test real HTTP access and Server Component client
@@ -152,6 +158,8 @@ jobs:
         run: npm run test:history:http
       - name: Test private chat and notification HTTP routes
         run: npm run test:chat:http
+      - name: Test review eligibility and public review HTTP routes
+        run: npm run test:reviews:http
       - name: Stop auth journey app
         if: always()
         run: |
