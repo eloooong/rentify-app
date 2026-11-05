@@ -64,3 +64,28 @@ Person A owns booking-page paid cancellation/refund controls. Use the merged [re
 - The PHP 10,302 payment used the GCash failure value in Xendit's linked [simulation matrix](https://docs.xendit.co/docs/simulate-error-scenarios). No matching refund resource was returned. The full 1,030,200-centavo obligation remains in review and scheduled read-only discovery; no reservation was released or replacement POST sent merely because discovery was empty. Provider-confirmed FAILED and subsequent bounded retry acceptance remain unverified. This deliberately failed sandbox record is retained for operator investigation.
 
 The fixture listing is paused after verification, and fictional accounts/financial audit records are retained. The failure scenario is not a successful refund and must not be hidden by cleanup. No live payment occurred.
+
+## Hosted chat and notification rollout — 5 November 2026
+
+Angel requested the first remaining B task: apply the merged chat/notification migration and verify hosted delivery/access. The existing free test project was paused; it was resumed through the Supabase dashboard and reported restoration complete before migration work. After the project became healthy, linking again restored the CLI connection. No reset, new migration, dependency change or frontend change was needed.
+
+The CLI migration list showed every committed version aligned except `20261025155000`. The following command applied that sole pending migration unchanged and recorded its committed version/name in hosted migration history:
+
+```sh
+node node_modules/supabase/dist/supabase.js migration up --linked --project-ref oqtngsqpocmiezmszcid --yes
+```
+
+Hosted catalog checks confirmed RLS on conversations/messages/notifications and both messages and notifications in `supabase_realtime`. Six authenticated, unfiltered sockets (each of the owner, renter and admin-outsider subscribed to both tables) reached SUBSCRIBED, Postgres subscription readiness and database replication readiness before mutations. Every client called `await client.realtime.setAuth()` before joining.
+
+Verification used fresh, confirmed fictional accounts and one fictional requested booking on the canonical HTTPS app. The operator script was kept under ignored `tmp/` and run with `node --env-file=.env.staging.local tmp/hosted-chat-rollout.mjs`; private fixture credentials and the machine-readable result remain ignored. Completed 5 November 2026 at 9:10 p.m. Asia/Manila (13:10 UTC). The hosted checks passed:
+
+- Anonymous conversation/notification reads returned 401; an unrelated Origin returned 403 and an unsupported mutation content type returned 415. Both participants opened the same booking conversation; the admin-outsider received 404.
+- A renter message returned 201 and reached both participants. An exact same-key retry returned 200 and the original message; a changed body returned 409. Direct message insertion was denied with 42501.
+- Exactly one owner chat notification was created by the retry sequence. Its payload contained booking/conversation/message IDs only; the private event key was absent. Other users could not read or mark it through HTTP or table access.
+- Recipient notification read UPDATE delivery and participant message read-receipt UPDATE delivery passed. Repeated read commands were idempotent.
+- An owner reply reached the renter with a renter-only notification. Cancelling the unpaid fixture emitted booking-status alerts to both participants, and the closed booking retained chat access.
+- The unrelated administrator's unfiltered message and notification sockets received zero events through the completed positive-delivery and read checks. Its HTTP lists were empty; direct message/notification selects revealed no fixture rows.
+
+Fixture booking `83626fc2-092b-4418-9e32-73b58be27e12` is cancelled; listing is paused, accounts are suspended and the temporary admin role was removed. Chat/notification/audit evidence was retained. The script created no checkout, charge or refund. Existing payment/refund minute jobs remained active, and consecutive post-restore HTTP results were 200 without timeouts. The unresolved financial fixture was not altered.
+
+B's hosted rollout gate is complete. A can use the hosted backend; A3.1's remaining browser/screen-reader checks and A3.2's bell/center remain separate. Review eligibility, email/reminders and the Xendit failed-refund/retry acceptance gate remain open. If containment is needed, stop using the chat UI while investigating; preserve messages/audit history and apply any schema correction through a new reviewed migration. Do not undo this migration by editing its committed file or dropping tables.

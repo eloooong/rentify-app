@@ -1,6 +1,6 @@
 # In-app notification contract
 
-Person B owns the backend; Person A owns the bell/center. Integrate after this implementation PR merges. Angel selected in-app delivery first; email is later. No email provider, push service, outbound messages or scheduled reminder policy is added here. B3.1 stays incomplete for those later requirements.
+Person B owns the backend; Person A owns the bell/center. The backend merged in PR #50; hosted migration and recipient-only delivery/access verification passed on 5 November 2026. Person A can integrate the bell/center. Angel selected in-app delivery first; email is later. No email provider, push service, outbound messages or scheduled reminder policy is added here. B3.1 stays incomplete for those later requirements.
 
 Verified users can read only their own notifications, including while suspended. Only trusted database triggers create notifications. Clients cannot choose a recipient, type, payload, timestamp or unread state. Marking read is one-way and idempotent. Admin status grants no extra access.
 
@@ -15,3 +15,5 @@ Verified users can read only their own notifications, including while suspended.
 - `booking.status`: `{booking_id,status}` to both participants when a booking changes status (including system expiry/payment). Informational events may include the actor's own action. No retroactive alerts for existing bookings.
 
 RPCs: `list_my_notifications(p_unread,p_page,p_page_size)`, `mark_notification_read(p_notification)`. Table SELECT is recipient-only RLS; direct writes and public RPC creation are denied. Internal deduplication keys are not returned by HTTP. Postgres Changes publishes notifications INSERT/UPDATE with recipient RLS. Subscribe using `user_id=eq.<signed-in user id>` and refetch the API on events/reconnect; a filter is only an optimization, never authorization. No message delivery or read status is inferred from a socket acknowledgement.
+
+Hosted verification covered exactly one routing-only chat notification after an idempotent send retry, notification read UPDATE delivery, booking cancellation alerts to both participants and zero delivery to an admin outside the booking. Subscribe only after `await client.realtime.setAuth()` and the documented database readiness signals. [Rollout evidence](../../supabase/TEST-ENVIRONMENT.md#hosted-chat-and-notification-rollout--5-november-2026). This does not complete email/reminders or A's UI acceptance.
