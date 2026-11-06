@@ -47,6 +47,14 @@ export default async function AccountPage() {
       >
         Change password
       </Link>
+      <div>
+        <Link
+          className="text-sm text-primary underline underline-offset-4"
+          href="/checklists"
+        >
+          Rental checklists
+        </Link>
+      </div>
       <AuthForm mode="logout" />
     </section>
   );

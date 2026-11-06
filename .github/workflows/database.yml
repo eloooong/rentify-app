@@ -14,6 +14,9 @@ on:
       - lib/chat/**
       - lib/notifications/**
       - lib/reviews/**
+      - lib/checklists/**
+      - app/checklists/**
+      - app/api/checklists/**
       - app/api/profiles/**
       - app/api/catalog/**
       - app/api/bookings/**
@@ -47,6 +50,9 @@ on:
       - lib/chat/**
       - lib/notifications/**
       - lib/reviews/**
+      - lib/checklists/**
+      - app/checklists/**
+      - app/api/checklists/**
       - app/api/profiles/**
       - app/api/catalog/**
       - app/api/bookings/**
@@ -138,7 +144,8 @@ jobs:
         run: |
           npm run db:env
           npm run build
-          npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/rentify-auth-next.log 2>&1 &
+          SUPABASE_SERVICE_ROLE_KEY="$(node --input-type=module -e 'import { runCli } from "./supabase/scripts/cli.mjs"; const status = JSON.parse(runCli(["status", "--output", "json"], true)); if (status.API_URL !== "http://127.0.0.1:54321" || !status.SERVICE_ROLE_KEY) process.exit(1); process.stdout.write(status.SERVICE_ROLE_KEY);')"
+          SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY" npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/rentify-auth-next.log 2>&1 &
           echo $! > /tmp/rentify-auth-next.pid
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://localhost:3000/login > /dev/null; then exit 0; fi
@@ -160,6 +167,8 @@ jobs:
         run: npm run test:chat:http
       - name: Test review eligibility and public review HTTP routes
         run: npm run test:reviews:http
+      - name: Test private checklist evidence and physical transfer
+        run: npm run test:checklists:http
       - name: Stop auth journey app
         if: always()
         run: |
