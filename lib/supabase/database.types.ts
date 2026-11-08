@@ -1003,6 +1003,10 @@ export type Database = {
         Args: { object_name: string };
         Returns: boolean;
       };
+      can_upload_checklist_photo: {
+        Args: { p_name: string };
+        Returns: boolean;
+      };
       can_write_listing_image: {
         Args: { object_name: string };
         Returns: boolean;
@@ -1020,6 +1024,27 @@ export type Database = {
           >;
         };
         Returns: Json;
+      };
+      checklist_payload: {
+        Args: {
+          b: Omit<
+            Database["public"]["Tables"]["bookings"]["Row"],
+            Database["public"]["Tables"]["bookings"]["ComputedFields"]
+          >;
+          p_stage: string;
+        };
+        Returns: Json;
+      };
+      checklist_stage_open: {
+        Args: {
+          b: Omit<
+            Database["public"]["Tables"]["bookings"]["Row"],
+            Database["public"]["Tables"]["bookings"]["ComputedFields"]
+          >;
+          p_now: string;
+          p_stage: string;
+        };
+        Returns: boolean;
       };
       checkout_can_pay: { Args: { p_booking: string }; Returns: boolean };
       checkout_payload: {
@@ -1076,6 +1101,15 @@ export type Database = {
         }[];
       };
       communication_user: { Args: Record<PropertyKey, never>; Returns: string };
+      confirm_condition_checklist: {
+        Args: {
+          p_booking: string;
+          p_checks: Json;
+          p_note?: string;
+          p_stage: string;
+        };
+        Returns: Json;
+      };
       enqueue_payment_event: {
         Args: {
           p_event: string;
@@ -1102,6 +1136,10 @@ export type Database = {
       get_booking_refunds: { Args: { p_booking: string }; Returns: Json };
       get_booking_review: { Args: { p_booking: string }; Returns: Json };
       get_checkout: { Args: { p_booking: string }; Returns: Json };
+      get_condition_checklist: {
+        Args: { p_booking: string; p_stage: string };
+        Returns: Json;
+      };
       is_public_listing: { Args: { listing: string }; Returns: boolean };
       list_chat_messages: {
         Args: { p_before?: string; p_conversation: string; p_limit?: number };
