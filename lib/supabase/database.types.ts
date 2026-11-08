@@ -51,6 +51,67 @@ export type Database = {
           },
         ];
       };
+      booking_email_outbox: {
+        Row: {
+          attempts: number;
+          booking_id: string;
+          capture_id: string | null;
+          due_at: string;
+          event_key: string;
+          expires_at: string;
+          id: string;
+          lease_token: string | null;
+          lease_until: string | null;
+          recipient_id: string;
+          state: string;
+          template: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          attempts?: number;
+          booking_id: string;
+          capture_id?: string | null;
+          due_at: string;
+          event_key: string;
+          expires_at: string;
+          id?: string;
+          lease_token?: string | null;
+          lease_until?: string | null;
+          recipient_id: string;
+          state?: string;
+          template: string;
+        };
+        Update: {
+          attempts?: number;
+          booking_id?: string;
+          capture_id?: string | null;
+          due_at?: string;
+          event_key?: string;
+          expires_at?: string;
+          id?: string;
+          lease_token?: string | null;
+          lease_until?: string | null;
+          recipient_id?: string;
+          state?: string;
+          template?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_email_outbox_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "booking_email_outbox_recipient_id_fkey";
+            columns: ["recipient_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       bookings: {
         Row: {
           accepted_at: string | null;
@@ -1031,6 +1092,15 @@ export type Database = {
         };
         Returns: Json;
       };
+      claim_booking_email: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          booking_id: string;
+          id: string;
+          lease_token: string;
+          template: string;
+        }[];
+      };
       claim_payment_work: {
         Args: { p_attempt?: string; p_limit?: number };
         Returns: {
@@ -1076,6 +1146,10 @@ export type Database = {
         }[];
       };
       communication_user: { Args: Record<PropertyKey, never>; Returns: string };
+      enqueue_booking_email_reminders: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
       enqueue_payment_event: {
         Args: {
           p_event: string;
@@ -1097,6 +1171,15 @@ export type Database = {
       fail_refund_work: {
         Args: { p_code: string; p_lease: string; p_refund: string };
         Returns: undefined;
+      };
+      finish_booking_email: {
+        Args: {
+          p_capture_id?: string;
+          p_id: string;
+          p_result: string;
+          p_token: string;
+        };
+        Returns: boolean;
       };
       get_booking: { Args: { p_booking: string }; Returns: Json };
       get_booking_refunds: { Args: { p_booking: string }; Returns: Json };

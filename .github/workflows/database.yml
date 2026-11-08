@@ -113,6 +113,8 @@ jobs:
         run: npm run db:test:history
       - name: Test chat, notifications and real Realtime access boundaries
         run: npm run db:test:chat
+      - name: Verify local booking email capture and outbox retries
+        run: npm run test:emails:local
       - name: Test completed-only public reviews, immutable retries and privacy
         run: npm run db:test:reviews
       - name: Test local demo seed, preservation, privacy, and scoped reset

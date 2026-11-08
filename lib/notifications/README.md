@@ -1,6 +1,6 @@
 # In-app notification contract
 
-Person B owns the backend; Person A owns the bell/center. The backend merged in PR #50; hosted migration and recipient-only delivery/access verification passed on 5 November 2026. Person A can integrate the bell/center. Angel selected in-app delivery first; email is later. No email provider, push service, outbound messages or scheduled reminder policy is added here. B3.1 stays incomplete for those later requirements.
+Person B owns the backend. Person A owns the bell and notification center. The in-app backend merged in PR #50, and hosted migration and recipient-only access and delivery verification passed on 5 November 2026. Person A can integrate the bell and notification center.
 
 Verified users can read only their own notifications, including while suspended. Only trusted database triggers create notifications. Clients cannot choose a recipient, type, payload, timestamp or unread state. Marking read is one-way and idempotent. Admin status grants no extra access.
 
@@ -18,4 +18,4 @@ RPCs: `list_my_notifications(p_unread,p_page,p_page_size)`, `mark_notification_r
 
 Hosted verification covered exactly one routing-only chat notification after an idempotent send retry, notification read UPDATE delivery, booking cancellation alerts to both participants and zero delivery to an admin outside the booking. Subscribe only after `await client.realtime.setAuth()` and the documented database readiness signals. [Rollout evidence](../../supabase/TEST-ENVIRONMENT.md#hosted-chat-and-notification-rollout--5-november-2026). This does not complete email/reminders or A's UI acceptance.
 
-B3.1 email prep is ready for review. See the [draft email templates](EMAIL-TEMPLATES.md) and [sandbox delivery, retry, and reminder plan](EMAIL-DELIVERY.md).
+B3.1 booking emails and reminders can be captured locally in Mailpit. See the [booking email templates](EMAIL-TEMPLATES.md) and [local setup and hosted rollout plan](EMAIL-DELIVERY.md).
