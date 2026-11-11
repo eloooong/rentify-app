@@ -1,6 +1,6 @@
 # Two-sided review contract
 
-Person B owns these RPCs/APIs; Person A owns review screens and rating displays. Integrate after this migration/implementation is reviewed and merged. Angel selected immediate publication on 5 November 2026; see [policy](../../DECISIONS.md#9-reviews-for-the-demo).
+Person B owns these RPCs/APIs; Person A owns review screens and rating displays. PR #56 is merged and the hosted test backend is ready for UI integration. Angel selected immediate publication on 5 November 2026; see [policy](../../DECISIONS.md#9-reviews-for-the-demo).
 
 Each verified, active participant with a profile may submit one review of the other participant after the booking is `completed`. No other booking status qualifies. A calendar date, payment, handover or return alone does not prove completion. This feature adds no completion/settlement transition; B3.3 remains required for real completed bookings. An inactive counterparty does not remove the author's right to review a completed rental.
 
@@ -22,4 +22,4 @@ Database commands repeat identity/eligibility/input checks: `submit_booking_revi
 
 Verification uses `npm run db:test:reviews` for real Auth/RPC/concurrent submissions, `npm run test:reviews:http` with a production app on localhost:3000, and `npm run db:test` for grants/helper checks. HTTP tests accept the existing local-only `RENTIFY_TEST_BASE_URL` override when the app's canonical Origin matches. Isolated test fixtures set completed status through trusted local SQL explicitly; they do not pretend the unfinished B3.3 lifecycle exists. No hosted migration is applied before implementation review/merge.
 
-Local validation on 5 November 2026 passed: 403 unit tests, 341 SQL checks, real review Auth/RPC and HTTP tests, database lint, database/Server Component smoke, lint, typecheck, production build and generated types without drift. Hosted rollout and A's review UI integration remain pending. No review notification, email or moderation endpoint is added in this slice.
+Local validation on 5 November 2026 passed: 403 unit tests, 341 SQL checks, real review Auth/RPC and HTTP tests, database lint, database/Server Component smoke, lint, typecheck, production build and generated types without drift. Hosted rollout passed on 6 November 2026. Person A can now integrate and verify the UI. [Hosted evidence](../../supabase/TEST-ENVIRONMENT.md#hosted-review-rollout). No review notification, email or moderation endpoint is added in this slice.

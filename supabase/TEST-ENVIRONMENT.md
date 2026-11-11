@@ -88,4 +88,16 @@ Verification used fresh, confirmed fictional accounts and one fictional requeste
 
 Fixture booking `83626fc2-092b-4418-9e32-73b58be27e12` is cancelled; listing is paused, accounts are suspended and the temporary admin role was removed. Chat/notification/audit evidence was retained. The script created no checkout, charge or refund. Existing payment/refund minute jobs remained active, and consecutive post-restore HTTP results were 200 without timeouts. The unresolved financial fixture was not altered.
 
-B's hosted rollout gate is complete. A can use the hosted backend; A3.1's remaining browser/screen-reader checks and A3.2's bell/center remain separate. Review eligibility, email/reminders and the Xendit failed-refund/retry acceptance gate remain open. If containment is needed, stop using the chat UI while investigating; preserve messages/audit history and apply any schema correction through a new reviewed migration. Do not undo this migration by editing its committed file or dropping tables.
+B's hosted rollout gate is complete. A can use the hosted backend; A3.1's remaining browser/screen-reader checks and A3.2's bell/center remain separate. Email and scheduled reminders remain open. See the hosted review rollout below and the [Xendit acceptance evidence](../lib/payments/FAILED-REFUND-VERIFICATION.md). If containment is needed, stop using the chat UI while investigating; preserve messages/audit history and apply any schema correction through a new reviewed migration. Do not undo this migration by editing its committed file or dropping tables.
+
+## Hosted review rollout
+
+On 6 November 2026 (Asia/Manila), B applied `20261105134500_review_permissions.sql` from merged [PR #56](https://github.com/eloooong/rentify-app/pull/56) to `rentify-test` using `node node_modules/supabase/dist/supabase.js migration up --linked --project-ref oqtngsqpocmiezmszcid --yes`. This was the sole pending migration. The hosted migration history contains the committed version, review RLS is enabled, and client table access is denied. The anonymous role can call the narrow public review projection.
+
+Hosted HTTPS and Auth verification used fictional owner, renter and admin-outsider accounts and a private draft listing with two isolated bookings. The completed fixture was inserted directly for verification because the normal completion flow is B3.3.
+
+- Anonymous private reads returned 401, an admin outsider received 404 for reads and writes, and an incomplete booking rejected submission with 409. The API rejected a foreign Origin and a forged subject.
+- Concurrent identical submissions returned 201 and 200 with the same review ID. Exactly one review and one audit row were created. A changed retry returned `review_exists`.
+- The first review was publicly visible before the other participant submitted. Both directions and role-filtered rating summaries worked. Public responses exposed only the eight fields in the contract. Direct anonymous reads, anonymous eligibility RPC calls, and authenticated table updates were denied.
+
+The fictional bookings, reviews, related audit and notification rows, draft listing and test accounts were removed. A post-run check found zero fixture accounts and listings, and the hosted review count returned to its pre-rollout value of zero. Person A can integrate against the [review contract](../lib/reviews/README.md).
