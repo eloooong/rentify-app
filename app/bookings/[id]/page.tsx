@@ -103,9 +103,15 @@ export default async function BookingDetailPage(
 
       <section
         aria-labelledby="next-heading"
+        data-booking-scope
         className="flex flex-col gap-3 rounded-lg border border-border p-4"
       >
-        <h2 id="next-heading" className="text-lg font-semibold text-fg">
+        <h2
+          id="next-heading"
+          tabIndex={-1}
+          data-booking-focus
+          className="text-lg font-semibold text-fg"
+        >
           Where it stands
         </h2>
         <p>{statusHint(booking, booking.role)}</p>

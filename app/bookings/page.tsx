@@ -158,6 +158,7 @@ export default async function BookingsPage(props: PageProps<"/bookings">) {
               return (
                 <li
                   key={booking.id}
+                  data-booking-scope
                   className="flex gap-3 rounded-lg border border-border p-3 sm:gap-4 sm:p-4"
                 >
                   <div className="aspect-square w-20 shrink-0 self-start overflow-hidden rounded-md bg-surface-muted sm:aspect-[4/3] sm:w-36">
@@ -178,7 +179,11 @@ export default async function BookingsPage(props: PageProps<"/bookings">) {
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold text-fg">
+                      <h2
+                        tabIndex={-1}
+                        data-booking-focus
+                        className="text-lg font-semibold text-fg"
+                      >
                         <Link
                           href={`/bookings/${booking.id}`}
                           className="hover:text-brand-strong hover:underline"

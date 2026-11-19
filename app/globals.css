@@ -142,3 +142,20 @@
     outline-offset: 2px;
   }
 }
+
+/*
+ * Honour the system "reduce motion" setting: dialog zooms, skeleton pulses,
+ * spinners and smooth scrolling become near-instant. A tiny duration (not
+ * `none`) keeps animationend/transitionend firing, which Radix dialogs wait
+ * for before unmounting.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

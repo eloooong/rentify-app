@@ -32,7 +32,7 @@ export function TransactionItem({ item }: { item: HistoryItem }) {
       <h2 className="font-medium text-fg">
         <Link
           href={`/bookings/${item.booking_id}`}
-          className="rounded-sm underline-offset-4 hover:text-brand-strong hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          className="rounded-sm underline-offset-4 hover:text-brand-strong hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           {title}
           <span className="sr-only">, view booking</span>

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { apiRequest } from "@/components/listings/api-request";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { Booking } from "@/lib/bookings/validation";
@@ -42,6 +43,9 @@ export function CheckoutFlow({ booking, total, initialCheckout }: Props) {
   const [checkout, setCheckout] = useState(initialCheckout);
   const [consent, setConsent] = useState(false);
   const [consentProblem, setConsentProblem] = useState(false);
+  // Missing consent moves focus to the checkbox, whose description is the
+  // error, so screen readers hear it.
+  const consentBox = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<BookingProblem | null>(null);
   const [polls, setPolls] = useState(0);
@@ -85,7 +89,9 @@ export function CheckoutFlow({ booking, total, initialCheckout }: Props) {
 
   async function start() {
     if (!consent) {
-      setConsentProblem(true);
+      // Render the error first so it is part of the checkbox description.
+      flushSync(() => setConsentProblem(true));
+      consentBox.current?.focus();
       return;
     }
     setPending(true);
@@ -158,6 +164,7 @@ export function CheckoutFlow({ booking, total, initialCheckout }: Props) {
         </section>
         <div className="flex items-start gap-3">
           <input
+            ref={consentBox}
             id={consentId}
             type="checkbox"
             checked={consent}
