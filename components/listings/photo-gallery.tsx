@@ -31,7 +31,15 @@ export function PhotoGallery({
     const track = trackRef.current;
     if (!track) return;
     const next = Math.max(0, Math.min(photos.length - 1, index));
-    track.scrollTo({ left: next * track.clientWidth, behavior: "smooth" });
+    // CSS scroll-behavior can't override a scripted "smooth", so check the
+    // reduced-motion preference here.
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    track.scrollTo({
+      left: next * track.clientWidth,
+      behavior: reduce ? "auto" : "smooth",
+    });
     setCurrent(next);
   };
 

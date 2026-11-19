@@ -11,7 +11,7 @@ import {
 
 // Matches the Input styles so the native selects sit with the date fields.
 const SELECT_CLASS =
-  "h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base text-fg outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30";
+  "h-9 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base text-fg focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:text-sm dark:bg-input/30";
 
 /**
  * Type, role and date filters. A plain GET form, so it works before the

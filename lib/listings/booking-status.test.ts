@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Booking } from "@/lib/bookings/validation";
 import {
+  ACTION_COPY,
   bookingsHref,
   displayStatus,
   formatManilaTime,
@@ -90,6 +91,18 @@ describe("dashboard URL state", () => {
       "/bookings?role=owner&status=requested",
     );
     expect(bookingsHref(query, { role: "renter", page: 1 })).toBe("/bookings");
+  });
+});
+
+describe("ACTION_COPY", () => {
+  it("has a distinct past-tense confirmation for each action", () => {
+    const done = Object.values(ACTION_COPY).map((copy) => copy.done);
+    expect(done).toEqual([
+      "Request accepted. The renter has 30 minutes to pay.",
+      "Request declined.",
+      "Booking cancelled.",
+    ]);
+    expect(new Set(done).size).toBe(done.length);
   });
 });
 

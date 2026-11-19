@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DateRangeCalendar } from "@/components/bookings/date-range-calendar";
 import { apiRequest } from "@/components/listings/api-request";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -84,6 +84,12 @@ export function BookingPanel({
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<BookingProblem | null>(null);
   const [booking, setBooking] = useState<Booking | null>(null);
+  // The request button disappears once the request is sent, so move focus to
+  // the confirmation instead of letting it fall back to the page.
+  const sentPanel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (booking) sentPanel.current?.focus();
+  }, [booking]);
 
   function reloadAvailability() {
     setLoad({ state: "loading" });
@@ -140,7 +146,9 @@ export function BookingPanel({
   if (booking) {
     return (
       <div
+        ref={sentPanel}
         role="status"
+        tabIndex={-1}
         className="flex flex-col gap-2 rounded-md bg-surface-tint p-4 text-sm"
       >
         <p className="text-base font-semibold text-fg">Request sent</p>

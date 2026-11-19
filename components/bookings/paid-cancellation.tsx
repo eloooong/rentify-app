@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiRequest } from "@/components/listings/api-request";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import type { BookingProblem } from "@/lib/listings/booking-dates";
 import type { BookingRole } from "@/lib/listings/booking-status";
 import { interpretRefundError, paidCancelCopy } from "@/lib/listings/refunds";
 import { BookingProblemAlert, ReasonDialog } from "./reason-dialog";
+import { useRefreshFocus } from "./use-refresh-focus";
 
 /**
  * "Cancel and refund" for a paid booking, shown only while B's refund status
@@ -29,10 +29,11 @@ export function PaidCancellation({
   total: number;
   returnTo: string;
 }) {
-  const router = useRouter();
+  const { root, refresh } = useRefreshFocus<HTMLDivElement>();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<BookingProblem | null>(null);
+  const [done, setDone] = useState(false);
   const copy = paidCancelCopy(role, total);
 
   async function submit(reason: string) {
@@ -47,10 +48,11 @@ export function PaidCancellation({
       if (!result.ok) {
         const next = interpretRefundError(result.status, result.json, returnTo);
         setProblem(next);
-        if (next.refresh) router.refresh();
+        if (next.refresh) refresh();
         return;
       }
-      router.refresh();
+      setDone(true);
+      refresh();
     } catch {
       setOpen(false);
       setProblem(interpretRefundError(0, null, returnTo));
@@ -59,10 +61,11 @@ export function PaidCancellation({
     }
   }
 
-  if (!available && !problem) return null;
+  // Stay mounted after cancelling so the result can still be announced.
+  if (!available && !problem && !done) return null;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div ref={root} className="flex flex-col gap-2">
       {available && (
         <Button
           type="button"
@@ -73,6 +76,7 @@ export function PaidCancellation({
           onClick={() => {
             setOpen(true);
             setProblem(null);
+            setDone(false);
           }}
         >
           {copy.label}
@@ -80,7 +84,11 @@ export function PaidCancellation({
       )}
 
       <p role="status" aria-live="polite" className="sr-only">
-        {pending ? "Cancelling booking…" : ""}
+        {pending
+          ? "Cancelling booking…"
+          : done
+            ? "Booking cancelled. The refund status is shown on this page."
+            : ""}
       </p>
       {problem && <BookingProblemAlert problem={problem} />}
 

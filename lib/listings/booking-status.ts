@@ -160,7 +160,14 @@ export type BookingAction = Booking["allowed_actions"][number];
 
 export const ACTION_COPY: Record<
   BookingAction,
-  { label: string; title: string; description: string; confirm: string }
+  {
+    label: string;
+    title: string;
+    description: string;
+    confirm: string;
+    /** Announced to screen readers once the change succeeds. */
+    done: string;
+  }
 > = {
   accept: {
     label: "Accept",
@@ -168,12 +175,14 @@ export const ACTION_COPY: Record<
     description:
       "The dates are reserved for this renter, who then has 30 minutes to pay. Other requests for overlapping dates can no longer be accepted.",
     confirm: "Accept request",
+    done: "Request accepted. The renter has 30 minutes to pay.",
   },
   decline: {
     label: "Decline",
     title: "Decline this request?",
     description: "The renter sees your reason. Declining can't be undone.",
     confirm: "Decline request",
+    done: "Request declined.",
   },
   cancel: {
     label: "Cancel booking",
@@ -181,6 +190,7 @@ export const ACTION_COPY: Record<
     description:
       "The other person sees your reason. Cancelling can't be undone.",
     confirm: "Cancel booking",
+    done: "Booking cancelled.",
   },
 };
 

@@ -43,7 +43,8 @@ export function ReviewCard({
         </span>
         {showSource && (
           <span className="text-muted-foreground">
-            · {reviewSourceLabel(review.subject_role)}
+            <span aria-hidden="true">· </span>
+            {reviewSourceLabel(review.subject_role)}
           </span>
         )}
       </p>
