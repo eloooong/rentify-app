@@ -37,7 +37,7 @@ export function MobileMenu({
         type="button"
         aria-haspopup="dialog"
         onClick={() => dialogRef.current?.showModal()}
-        className="order-2 ml-auto inline-flex size-11 items-center justify-center rounded-md text-fg hover:bg-surface-muted md:hidden"
+        className={`order-2 ${signedIn ? "" : "ml-auto"} inline-flex size-11 items-center justify-center rounded-md text-fg hover:bg-surface-muted md:hidden`}
       >
         <MenuIcon />
         <span className="sr-only">Open menu</span>
