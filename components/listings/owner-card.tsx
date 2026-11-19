@@ -1,4 +1,9 @@
+import { RatingSummary } from "@/components/reviews/rating-summary";
 import type { ListingOwner } from "@/lib/listings/detail";
+import {
+  reviewsHref,
+  type RatingSummary as Summary,
+} from "@/lib/listings/reviews";
 
 function initials(name: string) {
   return (
@@ -11,7 +16,14 @@ function initials(name: string) {
   );
 }
 
-export function OwnerCard({ owner }: { owner: ListingOwner | null }) {
+export function OwnerCard({
+  owner,
+  rating,
+}: {
+  owner: ListingOwner | null;
+  /** The owner's reviews as an owner; null when they couldn't be loaded. */
+  rating: Summary | null;
+}) {
   if (!owner) return null;
   const since = new Intl.DateTimeFormat("en-PH", {
     month: "long",
@@ -35,9 +47,12 @@ export function OwnerCard({ owner }: { owner: ListingOwner | null }) {
           Listed by
         </h2>
         <p className="font-semibold text-fg">{owner.displayName}</p>
-        <p className="text-sm text-muted-foreground">
-          Member since {since} · No reviews yet
-        </p>
+        <p className="text-sm text-muted-foreground">Member since {since}</p>
+        <RatingSummary
+          summary={rating}
+          href={reviewsHref(owner.id, { page: 1, role: "owner" })}
+          className="mt-1"
+        />
       </div>
     </section>
   );

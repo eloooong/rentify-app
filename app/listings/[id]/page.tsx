@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAppOrigin } from "@/lib/auth/config";
 import { getPublicListing } from "@/lib/listings/detail";
 import { formatMoney } from "@/lib/listings/format";
+import { getRatingSummary } from "@/lib/listings/reviews-server";
 import { buildSpecs } from "@/lib/listings/specs";
 
 function summary(text: string, fallback: string) {
@@ -65,6 +66,9 @@ export default async function ListingDetailPage(
     getSignedInUser(),
   ]);
   if (!listing) notFound();
+  const ownerRating = listing.owner
+    ? await getRatingSummary(listing.owner.id, "owner")
+    : null;
 
   const specs = buildSpecs(
     listing.category?.attributeSchema,
@@ -141,7 +145,7 @@ export default async function ListingDetailPage(
             />
           </section>
 
-          <OwnerCard owner={listing.owner} />
+          <OwnerCard owner={listing.owner} rating={ownerRating} />
         </div>
       </div>
 

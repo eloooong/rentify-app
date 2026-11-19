@@ -7,6 +7,8 @@ import { BookingStatusBadge } from "@/components/bookings/booking-status-badge";
 import { PaidCancellation } from "@/components/bookings/paid-cancellation";
 import { RefundStatusPanel } from "@/components/bookings/refund-status";
 import { OpenChatButton } from "@/components/chat/open-chat-button";
+import { RatingSummary } from "@/components/reviews/rating-summary";
+import { ReviewPanel } from "@/components/reviews/review-panel";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/session";
 import { formatDate } from "@/lib/listings/booking-dates";
@@ -23,6 +25,8 @@ import {
   paidCancellationNote,
   refundView,
 } from "@/lib/listings/refunds";
+import { reviewsHref } from "@/lib/listings/reviews";
+import { getRatingSummary } from "@/lib/listings/reviews-server";
 
 export const metadata: Metadata = {
   title: "Booking | Rentify",
@@ -46,11 +50,16 @@ export default async function BookingDetailPage(
   const user = await requireUser(returnTo);
   const booking = await getMyBooking(user.id, id);
   if (!booking) notFound();
-  // The page still works without refund status; it says so instead.
-  const refunds = await getMyRefunds(id).catch(() => null);
+  const owner = booking.role === "owner";
+  const counterpartId = owner ? booking.renter_id : booking.owner_id;
+  const counterpartRole = owner ? "renter" : "owner";
+  const [refunds, counterpartRating] = await Promise.all([
+    // The page still works without refund status; it says so instead.
+    getMyRefunds(id).catch(() => null),
+    getRatingSummary(counterpartId, counterpartRole),
+  ]);
 
   const status = displayStatus(booking);
-  const owner = booking.role === "owner";
   const title = booking.listing?.title ?? "Listing unavailable";
   const money = (amount: number) => formatMoney(amount, booking.currency);
   const cancellation = paidCancellation(booking, refunds, new Date());
@@ -145,6 +154,14 @@ export default async function BookingDetailPage(
         )}
       </section>
 
+      <ReviewPanel
+        bookingId={booking.id}
+        status={status}
+        viewerRole={booking.role}
+        counterpart={booking.counterpart}
+        returnTo={returnTo}
+      />
+
       {refund && <RefundStatusPanel view={refund} />}
 
       <section aria-labelledby="details-heading">
@@ -156,7 +173,17 @@ export default async function BookingDetailPage(
           <Row label="Return">{formatDate(booking.return_date)}</Row>
           <Row label="Rental days">{booking.rental_days}</Row>
           {booking.counterpart && (
-            <Row label={owner ? "Renter" : "Owner"}>{booking.counterpart}</Row>
+            <Row label={owner ? "Renter" : "Owner"}>
+              {booking.counterpart}
+              <RatingSummary
+                summary={counterpartRating}
+                href={reviewsHref(counterpartId, {
+                  page: 1,
+                  role: counterpartRole,
+                })}
+                className="mt-1 justify-end font-normal"
+              />
+            </Row>
           )}
           <Row label="Requested">{formatManilaTime(booking.created_at)}</Row>
           {booking.request_expires_at && booking.status === "requested" && (
