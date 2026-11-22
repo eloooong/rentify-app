@@ -15,7 +15,10 @@ export function LegalPage({ document }: { document: LegalDocument }) {
   return (
     <article className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8 sm:px-6">
       <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
-        <Link href="/help" className="hover:text-brand-strong hover:underline">
+        <Link
+          href="/help"
+          className="inline-flex min-h-6 items-center hover:text-brand-strong hover:underline"
+        >
           Help center
         </Link>
       </nav>

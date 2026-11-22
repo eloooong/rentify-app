@@ -74,7 +74,7 @@ export default async function BookingDetailPage(
             status: null,
             page: 1,
           })}
-          className="text-muted-foreground hover:text-brand-strong hover:underline"
+          className="inline-flex min-h-6 items-center text-muted-foreground hover:text-brand-strong hover:underline"
         >
           ← {owner ? "Hosting" : "Renting"}
         </Link>
@@ -90,7 +90,7 @@ export default async function BookingDetailPage(
         {booking.listing ? (
           <Link
             href={`/listings/${booking.listing_id}`}
-            className="w-fit text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
+            className="inline-flex min-h-6 w-fit items-center text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
           >
             View listing
           </Link>

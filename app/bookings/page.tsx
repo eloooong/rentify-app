@@ -169,6 +169,8 @@ export default async function BookingsPage(props: PageProps<"/bookings">) {
                       <img
                         src={booking.listing.photoUrl}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="size-full object-cover"
                       />
                     ) : (
@@ -214,7 +216,7 @@ export default async function BookingsPage(props: PageProps<"/bookings">) {
                     />
                     <Link
                       href={`/bookings/${booking.id}`}
-                      className="w-fit text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
+                      className="inline-flex min-h-6 w-fit items-center text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
                     >
                       View details<span className="sr-only"> for {title}</span>
                     </Link>

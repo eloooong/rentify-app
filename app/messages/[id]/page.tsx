@@ -32,7 +32,7 @@ export default async function ConversationPage(
       <nav aria-label="Breadcrumb" className="text-sm">
         <Link
           href="/messages"
-          className="text-muted-foreground hover:text-brand-strong hover:underline"
+          className="inline-flex min-h-6 items-center text-muted-foreground hover:text-brand-strong hover:underline"
         >
           ← Messages
         </Link>
@@ -48,7 +48,7 @@ export default async function ConversationPage(
         <p className="text-sm text-muted-foreground">With {counterpart}</p>
         <Link
           href={`/bookings/${conversation.booking_id}`}
-          className="w-fit text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
+          className="inline-flex min-h-6 w-fit items-center text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
         >
           View booking
         </Link>

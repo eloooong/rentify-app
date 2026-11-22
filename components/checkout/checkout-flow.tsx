@@ -131,7 +131,7 @@ export function CheckoutFlow({ booking, total, initialCheckout }: Props) {
   const bookingLink = (
     <Link
       href={`/bookings/${booking.id}`}
-      className="w-fit text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
+      className="inline-flex min-h-6 w-fit items-center text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
     >
       Back to the booking
     </Link>
@@ -176,7 +176,7 @@ export function CheckoutFlow({ booking, total, initialCheckout }: Props) {
               setConsent(event.target.checked);
               setConsentProblem(false);
             }}
-            className="mt-1 size-4 accent-brand-strong"
+            className="size-5 shrink-0 accent-brand-strong"
           />
           <label htmlFor={consentId} className="text-sm">
             I&apos;ve read the payment and refund rules and agree to them.

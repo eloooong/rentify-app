@@ -1,19 +1,21 @@
 import Link from "next/link";
+import { PageState } from "@/components/layout/page-state";
 import { Button } from "@/components/ui/button";
 
 export default function ConversationNotFound() {
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col items-start gap-3 px-4 py-16 sm:px-6">
-      <h1 className="text-2xl font-semibold text-fg">
-        We couldn&apos;t find that conversation
-      </h1>
+    <PageState
+      title={<>We couldn&apos;t find that conversation</>}
+      actions={
+        <Button asChild>
+          <Link href="/messages">Go to your messages</Link>
+        </Button>
+      }
+    >
       <p>
         It may belong to another account, or the link may be wrong. You can only
         see conversations for bookings you&apos;re part of.
       </p>
-      <Button asChild className="mt-2">
-        <Link href="/messages">Go to your messages</Link>
-      </Button>
-    </div>
+    </PageState>
   );
 }
