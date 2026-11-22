@@ -136,7 +136,7 @@ Check off a task after its acceptance checks pass and its PR is merged. Preparat
 
 **Person A — your friend**
 
-- [ ] **A4.1** Accessibility audit and fixes; report issues in B's screens to B.
+- [ ] **A4.1** Accessibility audit and fixes; report issues in B's screens to B. _Audit and fixes merged in [PR #63](https://github.com/eloooong/rentify-app/pull/63) on 19 November 2026 with all CI checks passing; no review is recorded on GitHub. [Report](docs/accessibility-audit.md): axe-core found 0 WCAG 2.1 AA violations on every audited route at 320/375/1280 px; keyboard passes found and fixed a faint shared focus ring, lost focus after booking actions, a silent checkout consent error, and missing reduced-motion support. Verified on the local stack only; no real screen reader was used. A-8 to A-10 move to A4.2. B-1 to B-5 in the report are for Person B (checklist headings, the unaudited checklist form, the sign-in error announcement, API error wording, and the `/notifications` sign-in return). Leave unticked until B reviews those findings._
 - [ ] **A4.2** Mobile/performance polish and consistent loading, empty, error, and missing-page states.
 - [ ] **A4.3** Usability test kit; run sessions, record findings, and prioritize fixes. _Kit drafted and merged in [PR #3](https://github.com/eloooong/rentify-app/pull/3) (`docs/usability-test.md`). Sessions not run yet, so leave unticked._
 
