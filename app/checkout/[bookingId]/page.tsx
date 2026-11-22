@@ -42,7 +42,7 @@ export default async function CheckoutPage(
       <nav aria-label="Breadcrumb" className="text-sm">
         <Link
           href={`/bookings/${booking.id}`}
-          className="text-muted-foreground hover:text-brand-strong hover:underline"
+          className="inline-flex min-h-6 items-center text-muted-foreground hover:text-brand-strong hover:underline"
         >
           ← Booking
         </Link>

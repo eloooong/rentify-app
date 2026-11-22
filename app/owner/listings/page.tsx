@@ -142,7 +142,7 @@ export default async function MyListingsPage(
                     {listing.status === "published" && (
                       <Link
                         href={`/listings/${listing.id}`}
-                        className="w-fit text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
+                        className="inline-flex min-h-6 w-fit items-center text-sm font-medium text-fg underline underline-offset-4 hover:text-brand-strong"
                       >
                         View public listing
                         <span className="sr-only"> for {listing.title}</span>

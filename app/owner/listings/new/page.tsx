@@ -33,7 +33,7 @@ export default async function NewListingPage() {
       <nav aria-label="Breadcrumb" className="text-sm">
         <Link
           href="/owner/listings"
-          className="text-muted-foreground hover:text-brand-strong hover:underline"
+          className="inline-flex min-h-6 items-center text-muted-foreground hover:text-brand-strong hover:underline"
         >
           ← My listings
         </Link>

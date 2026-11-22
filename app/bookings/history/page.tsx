@@ -53,7 +53,7 @@ export default async function HistoryPage(
       <div>
         <Link
           href="/bookings"
-          className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-fg hover:underline"
+          className="inline-flex min-h-6 items-center text-sm font-medium text-muted-foreground underline-offset-4 hover:text-fg hover:underline"
         >
           ← Bookings
         </Link>

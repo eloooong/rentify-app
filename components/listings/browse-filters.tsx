@@ -49,7 +49,7 @@ export function BrowseFilters({
         open={filtersActive}
         className="rounded-lg border border-border bg-surface p-3"
       >
-        <summary className="cursor-pointer text-sm font-medium text-fg">
+        <summary className="cursor-pointer py-0.5 text-sm font-medium text-fg">
           Filters and sort
         </summary>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

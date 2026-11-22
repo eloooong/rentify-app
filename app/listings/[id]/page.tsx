@@ -83,7 +83,7 @@ export default async function ListingDetailPage(
           <li>
             <Link
               href="/listings"
-              className="hover:text-brand-strong hover:underline"
+              className="inline-flex min-h-6 items-center hover:text-brand-strong hover:underline"
             >
               Browse
             </Link>
@@ -93,7 +93,7 @@ export default async function ListingDetailPage(
               <span aria-hidden="true">/</span>
               <Link
                 href={`/listings?category=${encodeURIComponent(listing.category.slug)}`}
-                className="hover:text-brand-strong hover:underline"
+                className="inline-flex min-h-6 items-center hover:text-brand-strong hover:underline"
               >
                 {listing.category.name}
               </Link>
